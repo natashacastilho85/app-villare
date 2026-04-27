@@ -3022,7 +3022,7 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
 
   return `<div class="prec-peca-card${cardIdx % 2 === 1 ? ' par' : ''}" id="prec-card-${p.id}">
     <div class="prec-peca-header">
-      <span class="prec-peca-nome">${p.nome}</span>
+      <span class="prec-peca-nome" onclick="openPeca(${p.id})" style="cursor:pointer" title="Editar nome">${p.nome} ✏️</span>
       <button onclick="duplicarPecaPrec(${p.id})" title="Duplicar peça" style="background:none;border:none;color:var(--brown);font-size:0.75rem;cursor:pointer;padding:0.2rem 0.4rem;border-radius:3px;opacity:0.7">⧉</button>
       <button onclick="excluirPecaPrec(${p.id})" title="Excluir peça da precificação" style="background:none;border:none;color:var(--bordeaux);font-size:0.75rem;cursor:pointer;padding:0.2rem 0.4rem;border-radius:3px;opacity:0.7">🗑</button>
     </div>
@@ -3060,7 +3060,7 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
       <label>Simular: se vender por R$</label>
       <div class="prec-simul-row">
         <input class="prec-simul-input" type="number" step="1" placeholder="ex: 1200"
-        oninput="simularLucro(${p.id}, this.value, ${r.custoTotalReal.toFixed(2)})">
+        oninput="simularLucro(${p.id}, this.value, ${r.custoTotalReal.toFixed(2)}, ${r.precoCartao.toFixed(2)})">
         <span class="prec-simul-result" id="prec-simul-res-${p.id}">← digite o valor</span>
       </div>
     </div>
@@ -3182,7 +3182,7 @@ function recalcularCard(pecaId) {
   if (totais[1]) totais[1].textContent = fmtR(r.precoCartao);
 }
 
-function simularLucro(pecaId, valorVenda, custoTotalReal) {
+function simularLucro(pecaId, valorVenda, custoTotalReal, precoCartao) {
   const el = document.getElementById('prec-simul-res-' + pecaId);
   if (!el) return;
   const venda = parseFloat(valorVenda);
@@ -3191,7 +3191,9 @@ function simularLucro(pecaId, valorVenda, custoTotalReal) {
   const lucroValor = venda - custoTotalReal;
   const fmt = v => 'R$ ' + Math.abs(v).toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2});
   const cor = lucro >= 0 ? 'var(--sage)' : 'var(--bordeaux)';
-  el.innerHTML = `<span style="color:${cor}"><strong>${lucro.toFixed(1)}% de lucro</strong> (${fmt(lucroValor)})</span>`;
+  const abaixoCartao = precoCartao > 0 && venda < precoCartao
+    ? ` <span style="font-size:0.7rem;color:var(--bordeaux)">⚠ abaixo do preço cartão</span>` : '';
+  el.innerHTML = `<span style="color:${cor}"><strong>${lucro.toFixed(1)}% de lucro</strong> (${fmt(lucroValor)})</span>${abaixoCartao}`;
 }
 
 // ── MATERIAIS GLOBAIS ──
