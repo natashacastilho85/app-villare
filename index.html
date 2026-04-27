@@ -3023,6 +3023,7 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
   return `<div class="prec-peca-card${cardIdx % 2 === 1 ? ' par' : ''}" id="prec-card-${p.id}">
     <div class="prec-peca-header">
       <span class="prec-peca-nome">${p.nome}</span>
+      <button onclick="duplicarPecaPrec(${p.id})" title="Duplicar peça" style="background:none;border:none;color:var(--brown);font-size:0.75rem;cursor:pointer;padding:0.2rem 0.4rem;border-radius:3px;opacity:0.7">⧉</button>
       <button onclick="excluirPecaPrec(${p.id})" title="Excluir peça da precificação" style="background:none;border:none;color:var(--bordeaux);font-size:0.75rem;cursor:pointer;padding:0.2rem 0.4rem;border-radius:3px;opacity:0.7">🗑</button>
     </div>
     ${matRows}
@@ -3059,7 +3060,7 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
       <label>Simular: se vender por R$</label>
       <div class="prec-simul-row">
         <input class="prec-simul-input" type="number" step="1" placeholder="ex: 1200"
-        oninput="simularLucro(${p.id}, this.value, ${r.precoCartao.toFixed(2)})">
+        oninput="simularLucro(${p.id}, this.value, ${r.custoTotalReal.toFixed(2)})">
         <span class="prec-simul-result" id="prec-simul-res-${p.id}">← digite o valor</span>
       </div>
     </div>
@@ -3106,6 +3107,21 @@ async function excluirPecaPrec(pecaId) {
     renderCatalogo();
     _renderPrecBody();
   } catch(e) { alert('Erro ao excluir: ' + e.message); }
+}
+
+async function duplicarPecaPrec(pecaId) {
+  const p = pecas.find(x => x.id === pecaId);
+  if (!p) return;
+  const novoNome = p.nome + ' (cópia)';
+  try {
+    const nova = await sbInsert('pecas', { nome: novoNome, valor: p.valor || 0 });
+    const novaId = nova[0].id;
+    pecas.push({ id: novaId, nome: novoNome, valor: p.valor || 0, desc: p.desc || '' });
+    precDados[novaId] = JSON.parse(JSON.stringify(getPrecPeca(pecaId)));
+    await salvarPrecLocal();
+    renderCatalogo();
+    _renderPrecBody();
+  } catch(e) { alert('Erro ao duplicar: ' + e.message); }
 }
 
 function atualizarPerdaResina(pecaId, val) {
@@ -3166,17 +3182,16 @@ function recalcularCard(pecaId) {
   if (totais[1]) totais[1].textContent = fmtR(r.precoCartao);
 }
 
-function simularLucro(pecaId, valorVenda, precoCartao) {
+function simularLucro(pecaId, valorVenda, custoTotalReal) {
   const el = document.getElementById('prec-simul-res-' + pecaId);
   if (!el) return;
   const venda = parseFloat(valorVenda);
   if (!venda || venda <= 0) { el.innerHTML = '← digite o valor'; return; }
-  const diff = venda - precoCartao;
-  const pct = (diff / venda * 100);
+  const lucro = (venda - custoTotalReal) / venda * 100;
+  const lucroValor = venda - custoTotalReal;
   const fmt = v => 'R$ ' + Math.abs(v).toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2});
-  const cor = diff >= 0 ? 'var(--sage)' : 'var(--bordeaux)';
-  const sinal = diff >= 0 ? '+' : '-';
-  el.innerHTML = `<span style="color:${cor}"><strong>${sinal}${pct.toFixed(1)}%</strong> (${sinal}${fmt(diff)}) vs cartão</span>`;
+  const cor = lucro >= 0 ? 'var(--sage)' : 'var(--bordeaux)';
+  el.innerHTML = `<span style="color:${cor}"><strong>${lucro.toFixed(1)}% de lucro</strong> (${fmt(lucroValor)})</span>`;
 }
 
 // ── MATERIAIS GLOBAIS ──
