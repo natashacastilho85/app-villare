@@ -2599,8 +2599,7 @@ let precDados = {};
 
 async function carregarPrecSupabase() {
   try {
-    const r = await sbFetch('configuracoes?chave=eq.prec-dados');
-    const data = await r.json();
+    const data = await sbFetch('configuracoes?chave=eq.prec-dados');
     if (data && data[0] && data[0].valor) precDados = data[0].valor;
   } catch(e) {}
 }
@@ -2609,10 +2608,10 @@ async function salvarPrecLocal() {
   try {
     await sbFetch('configuracoes', {
       method: 'POST',
-      headers: { 'Prefer': 'resolution=merge-duplicates' },
+      headers: { 'Prefer': 'resolution=merge-duplicates', 'Content-Type': 'application/json' },
       body: JSON.stringify({ chave: 'prec-dados', valor: precDados })
     });
-  } catch(e) {}
+  } catch(e) { console.error('Erro salvarPrecLocal:', e); }
 }
 
 function getPrecPeca(pecaId) {
@@ -3188,8 +3187,7 @@ let matModalSelId = null; // id do material global selecionado no modal
 
 async function carregarMatGlobaisSupabase() {
   try {
-    const r = await sbFetch('configuracoes?chave=eq.mat-globais');
-    const data = await r.json();
+    const data = await sbFetch('configuracoes?chave=eq.mat-globais');
     if (data && data[0] && data[0].valor) matGlobais = data[0].valor;
   } catch(e) {}
 }
@@ -3198,10 +3196,10 @@ async function salvarMatGlobais() {
   try {
     await sbFetch('configuracoes', {
       method: 'POST',
-      headers: { 'Prefer': 'resolution=merge-duplicates' },
+      headers: { 'Prefer': 'resolution=merge-duplicates', 'Content-Type': 'application/json' },
       body: JSON.stringify({ chave: 'mat-globais', valor: matGlobais })
     });
-  } catch(e) {}
+  } catch(e) { console.error('Erro salvarMatGlobais:', e); }
 }
 
 function custoPorUnidade(m) {
