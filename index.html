@@ -2606,11 +2606,11 @@ async function carregarPrecSupabase() {
 
 async function salvarPrecLocal() {
   try {
-    await sbFetch('configuracoes', {
-      method: 'POST',
-      headers: { 'Prefer': 'resolution=merge-duplicates', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chave: 'prec-dados', valor: precDados })
-    });
+   await sbFetch('configuracoes?on_conflict=chave', {
+  method: 'POST',
+  headers: { 'Prefer': 'resolution=merge-duplicates' },
+  body: JSON.stringify({ chave: 'prec-dados', valor: precDados })
+});
   } catch(e) { console.error('Erro salvarPrecLocal:', e); }
 }
 
@@ -3194,11 +3194,11 @@ async function carregarMatGlobaisSupabase() {
 
 async function salvarMatGlobais() {
   try {
-    await sbFetch('configuracoes', {
-      method: 'POST',
-      headers: { 'Prefer': 'resolution=merge-duplicates', 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chave: 'mat-globais', valor: matGlobais })
-    });
+   await sbFetch('configuracoes?on_conflict=chave', {
+  method: 'POST',
+  headers: { 'Prefer': 'resolution=merge-duplicates' },
+  body: JSON.stringify({ chave: 'mat-globais', valor: matGlobais })
+});
   } catch(e) { console.error('Erro salvarMatGlobais:', e); }
 }
 
