@@ -3186,11 +3186,15 @@ function simularLucro(pecaId, valorVenda, custoTotalReal, precoCartao) {
   if (!el) return;
   const venda = parseFloat(valorVenda);
   if (!venda || venda <= 0) { el.innerHTML = '← digite o valor'; return; }
-  const lucro = (venda - custoTotalReal) / venda * 100;
-  const lucroValor = venda - custoTotalReal;
+  // Remove a tarifa do cartão para chegar no preço base simulado
+  const tarifaCartao = getTarifaCartao();
+  const precoBaseSimulado = venda * (1 - tarifaCartao);
+  // Lucro real = (precoBase - custoTotal) / precoBase
+  const lucro = custoTotalReal > 0 ? (precoBaseSimulado - custoTotalReal) / precoBaseSimulado * 100 : 0;
+  const lucroValor = precoBaseSimulado - custoTotalReal;
   const fmt = v => 'R$ ' + Math.abs(v).toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2});
   const cor = lucro >= 0 ? 'var(--sage)' : 'var(--bordeaux)';
-  const abaixoCartao = precoCartao > 0 && venda < precoCartao
+  const abaixoCartao = venda < precoCartao
     ? ` <span style="font-size:0.7rem;color:var(--bordeaux)">⚠ abaixo do preço cartão</span>` : '';
   el.innerHTML = `<span style="color:${cor}"><strong>${lucro.toFixed(1)}% de lucro</strong> (${fmt(lucroValor)})</span>${abaixoCartao}`;
 }
