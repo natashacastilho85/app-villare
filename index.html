@@ -3105,6 +3105,7 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
   const elCusto = document.getElementById('prec-mat-custo-' + pecaId + '-' + idx);
   if (elCusto) elCusto.textContent = m.valor > 0 ? 'R$ ' + m.valor.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
   recalcularCard(pecaId);
+  renderCatalogo();
 }
 
 function atualizarMatPrec(pecaId, idx, val) {
