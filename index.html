@@ -3083,6 +3083,12 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
         <span class="prec-simul-result" id="prec-simul-res-${p.id}">← digite o valor</span>
       </div>
     </div>
+    
+    <div style="text-align: center; margin-top: 1rem; padding-top: 0.6rem; border-top: 1px dashed rgba(184,134,42,0.2);">
+      <button onclick="document.querySelector('#drawer-prec .drawer').scrollTo({top: 0, behavior: 'smooth'})" style="background: none; border: none; color: var(--brown); font-size: 0.72rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">
+        ↑ Voltar ao topo
+      </button>
+    </div>
   </div>`;
 }
 
