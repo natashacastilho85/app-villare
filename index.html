@@ -3127,19 +3127,22 @@ function atualizarPerdaResina(pecaId, val) {
   const d = getPrecPeca(pecaId);
   d.perdaResina = Math.max(0, parseFloat(val) || 0);
   recalcularCard(pecaId);
+  salvarPrecLocal();
 }
 
 function atualizarTempoPrec(pecaId, val) {
   const d = getPrecPeca(pecaId);
   d.tempo = Math.max(1, parseInt(val) || 60);
-  d._tempoEditado = true; // Marca que foi editado manualmente — não sobrescrever com total de processos
+  d._tempoEditado = true;
   recalcularCard(pecaId);
+  salvarPrecLocal();
 }
 
 function atualizarLucroPrec(pecaId, val) {
   const d = getPrecPeca(pecaId);
   d.lucro = parseFloat(val) || 0;
   recalcularCard(pecaId);
+  salvarPrecLocal();
 }
 
 function removerMatPrec(pecaId, idx) {
