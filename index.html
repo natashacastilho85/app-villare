@@ -3682,14 +3682,13 @@ function gerarImpressaoFicha(c, f) {
         .highlight-box { display: flex; justify-content: space-between; margin: 20px 0; }
         .h-item { width: 48%; background: #faf9f7; padding: 12px; text-align: center; border: 1px solid #e8e3dc; border-radius: 5px; }
         
-        /* Regra exclusiva para a impressora: adiciona o espaço da prancheta no topo */
         @media print { 
           @page { margin: 0; }
           body { padding: 90px 20px 20px 20px !important; } 
         }
       </style>
     </head>
-    <body>
+    <body onload="setTimeout(function() { window.print(); }, 500)">
       <div class="header">
         <h1>Villare Atelier</h1>
         <p>Ficha de Produção Interna</p>
@@ -3719,9 +3718,6 @@ function gerarImpressaoFicha(c, f) {
         <div style="height: 120px; border: 1px dashed #B8862A; border-radius: 4px; background: #faf9f7;"></div>
       </div>
     </body>
-    <script>
-      window.onload = function() { setTimeout(function() { window.print(); }, 500); }
-    </script>
     </html>
   `;
   w.document.write(html);
