@@ -3085,7 +3085,8 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
 }
 
 // Atualiza a qtd usada de um material vinculado e recalcula o custo
-function atualizarQtdMatPrec(pecaId, idx, val) {
+
+  function atualizarQtdMatPrec(pecaId, idx, val) {
   const d = getPrecPeca(pecaId);
   const m = d.materiais[idx];
   if (!m || !m.matGlobalId) return;
@@ -3110,6 +3111,7 @@ function atualizarMatPrec(pecaId, idx, val) {
   const d = getPrecPeca(pecaId);
   d.materiais[idx].valor = parseFloat(val) || 0;
   recalcularCard(pecaId);
+  renderCatalogo();
 }
 
 async function excluirPecaPrec(pecaId) {
@@ -3146,6 +3148,7 @@ function atualizarPerdaResina(pecaId, val) {
   d.perdaResina = Math.max(0, parseFloat(val) || 0);
   recalcularCard(pecaId);
   salvarPrecLocal();
+  renderCatalogo();
 }
 
 function atualizarTempoPrec(pecaId, val) {
@@ -3154,6 +3157,7 @@ function atualizarTempoPrec(pecaId, val) {
   d._tempoEditado = true;
   recalcularCard(pecaId);
   salvarPrecLocal();
+  renderCatalogo();
 }
 
 function atualizarLucroPrec(pecaId, val) {
@@ -3161,6 +3165,7 @@ function atualizarLucroPrec(pecaId, val) {
   d.lucro = parseFloat(val) || 0;
   recalcularCard(pecaId);
   salvarPrecLocal();
+  renderCatalogo();
 }
 
 function removerMatPrec(pecaId, idx) {
