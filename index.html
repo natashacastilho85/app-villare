@@ -1903,17 +1903,29 @@ async function excluirGasto() {
 
 // ── CATÁLOGO ──
 function renderCatalogo() {
-  const html = pecas.length ? pecas.map(p=>`
-    <div class="piece-card" onclick="openPeca(${p.id})">
+  const pecasCatalogo = [...pecas]
+    .filter(p => getPrecPeca(p.id).exibirCatalogo !== false)
+    .sort((a, b) => {
+      const pa = getPrecoPecaCalculado(a.id) || 0;
+      const pb = getPrecoPecaCalculado(b.id) || 0;
+      return pa - pb;
+    });
+  const html = pecasCatalogo.length ? pecasCatalogo.map(p => {
+    const precoCartao = getPrecoPecaCalculado(p.id);
+    const precoFmt = precoCartao
+      ? 'R$ ' + precoCartao.toLocaleString('pt-BR', {minimumFractionDigits:0})
+      : '—';
+    return `<div class="piece-card" onclick="openPeca(${p.id})">
       <div>
         <div class="piece-name">${p.nome}</div>
         ${p.desc?`<div style="font-size:0.65rem;color:var(--muted);margin-top:0.15rem">${p.desc}</div>`:''}
       </div>
       <div style="display:flex;align-items:center;gap:0.6rem">
-        <div class="piece-price">R$ ${p.valor.toLocaleString('pt-BR',{minimumFractionDigits:0})}</div>
+        <div class="piece-price">${precoFmt}</div>
         <div style="color:var(--muted-light);font-size:0.85rem">✏️</div>
       </div>
-    </div>`).join('') : `<div class="cal-empty">Nenhuma peça cadastrada</div>`;
+    </div>`;
+  }).join('') : `<div class="cal-empty">Nenhuma peça cadastrada</div>`;
   const scr = document.getElementById('catalogo-list');
   const drw = document.getElementById('catalogo-drawer-list');
   if (scr) scr.innerHTML = html;
@@ -3024,6 +3036,12 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
       <span class="prec-peca-nome" onclick="openPeca(${p.id})" style="cursor:pointer" title="Editar nome">${p.nome} ✏️</span>
       <button onclick="duplicarPecaPrec(${p.id})" title="Duplicar peça" style="background:none;border:none;color:var(--brown);font-size:0.75rem;cursor:pointer;padding:0.2rem 0.4rem;border-radius:3px;opacity:0.7">⧉</button>
       <button onclick="excluirPecaPrec(${p.id})" title="Excluir peça da precificação" style="background:none;border:none;color:var(--bordeaux);font-size:0.75rem;cursor:pointer;padding:0.2rem 0.4rem;border-radius:3px;opacity:0.7">🗑</button>
+    <label style="display:flex;align-items:center;gap:0.25rem;font-size:0.65rem;color:var(--muted);cursor:pointer;margin-left:auto;white-space:nowrap" title="Exibir no catálogo">
+        <input type="checkbox" ${d.exibirCatalogo !== false ? 'checked' : ''}
+          onchange="toggleExibirCatalogo(${p.id}, this.checked)"
+          style="accent-color:var(--brown);width:13px;height:13px;cursor:pointer;flex-shrink:0">
+        Catálogo
+      </label>
     </div>
     ${matRows}
     <button class="prec-add-btn" onclick="adicionarMatPrec(${p.id})">＋ Adicionar material</button>
@@ -3184,6 +3202,13 @@ function recalcularCard(pecaId) {
   if (totais[1]) totais[1].textContent = fmtR(r.precoCartao);
 }
 
+function toggleExibirCatalogo(pecaId, exibir) {
+  const d = getPrecPeca(pecaId);
+  d.exibirCatalogo = exibir;
+  salvarPrecLocal();
+  renderCatalogo();
+}
+  
 function simularLucro(pecaId, valorVenda, custoTotalReal, precoCartao) {
   const el = document.getElementById('prec-simul-res-' + pecaId);
   if (!el) return;
@@ -3359,7 +3384,8 @@ function renderModalMatLista() {
     el.innerHTML = '<div style="font-size:0.78rem;color:var(--muted);text-align:center;padding:0.8rem 0">Nenhum material no catálogo ainda.<br>Use o botão 🧪 Materiais para cadastrar.</div>';
     return;
   }
-  el.innerHTML = matGlobais.map(m => {
+  const matOrdenados = [...matGlobais].sort((a, b) => (a.nome||'').localeCompare(b.nome||'', 'pt-BR', {sensitivity:'base'}));
+  el.innerHTML = matOrdenados.map(m => {
     const cpu = custoPorUnidade(m);
     return `<div class="mat-modal-item" onclick="selecionarMatModal(${m.id})">
       <div>
