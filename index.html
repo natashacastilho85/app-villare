@@ -2935,7 +2935,8 @@ function atualizarTabelaResumo() {
         return m;
       });
       const r = calcPrec(materiaisComPerda, d.lucro, sal, cf);
-      return { nome: p.nome, precoCartao: r.precoCartao, precoBase: r.precoBase };
+      // CORREÇÃO: Adicionamos o 'id: p.id' aqui para o clique funcionar
+      return { id: p.id, nome: p.nome, precoCartao: r.precoCartao, precoBase: r.precoBase };
     }).sort((a, b) => a.precoCartao - b.precoCartao);
     
   let html = '<div class="prec-resumo-card">';
@@ -2943,7 +2944,9 @@ function atualizarTabelaResumo() {
   resumoOrdenado.forEach(r => {
     const semVal = r.precoCartao <= 0;
     const fmt = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2});
-    html += `<div class="prec-resumo-row">
+    
+    // CORREÇÃO: Adicionamos o 'onclick' e o 'cursor: pointer' na linha
+    html += `<div class="prec-resumo-row" onclick="irParaPeca(${r.id})" style="cursor: pointer;" title="Ir para precificação">
       <span class="prec-resumo-nome">${r.nome}</span>
       <span class="prec-resumo-val">
         ${semVal ? '—' : `<span style="font-size:0.72rem;color:var(--muted);margin-right:0.4rem">Pix ${fmt(r.precoBase)}</span>${fmt(r.precoCartao)}`}
