@@ -2886,18 +2886,6 @@ function _renderPrecBody() {
     return;
   }
 
-  // Resumo no topo — ordenado por preço (filtrando as que não vão pro catálogo)
-  const resumoOrdenado = pecas
-    .filter(p => getPrecPeca(p.id).exibirCatalogo !== false)
-    .map(p => {
-      const d = getPrecPeca(p.id);
-      const mins = d.tempo || getTotalProcessosMins() || 60;
-      const sal = valorHora * (mins / 60);
-      const cf  = custoFixoHora * (mins / 60);
-      const r = calcPrec(d.materiais, d.lucro, sal, cf);
-      return { nome: p.nome, precoCartao: r.precoCartao, precoBase: r.precoBase };
-    }).sort((a, b) => a.precoCartao - b.precoCartao);
-
   // Busca rápida no topo: digita parte do nome → rola até a peça
   let html = `<div class="prec-busca-wrap">
     <div class="prec-busca-inner">
@@ -2911,7 +2899,46 @@ function _renderPrecBody() {
     </div>
   </div>`;
 
-  html += '<div class="prec-resumo-card">';
+  // Aqui criamos uma "caixa vazia" que será preenchida e atualizada em tempo real
+  html += '<div id="prec-resumo-container"></div>';
+
+  // Cards por peça
+  pecas.forEach((p, idx) => {
+    const d = getPrecPeca(p.id);
+    html += renderPrecCard(p, d, valorHora, custoFixoHora, idx);
+  });
+
+  el.innerHTML = html;
+  
+  // Chama a função que preenche o resumo no topo
+  atualizarTabelaResumo();
+}
+
+function atualizarTabelaResumo() {
+  const container = document.getElementById('prec-resumo-container');
+  if (!container) return;
+  const valorHora = getValorHora();
+  const custoFixoHora = getCustoFixoPorHora();
+  
+  const resumoOrdenado = pecas
+    .filter(p => getPrecPeca(p.id).exibirCatalogo !== false)
+    .map(p => {
+      const d = getPrecPeca(p.id);
+      const mins = d.tempo || getTotalProcessosMins() || 60;
+      const sal = valorHora * (mins / 60);
+      const cf  = custoFixoHora * (mins / 60);
+      const perdaResina = (d.perdaResina ?? 5) / 100;
+      const materiaisComPerda = d.materiais.map(m => {
+        if ((m.nome || '').toLowerCase().includes('resina') && perdaResina > 0) {
+          return { ...m, valor: (parseFloat(m.valor) || 0) * (1 + perdaResina) };
+        }
+        return m;
+      });
+      const r = calcPrec(materiaisComPerda, d.lucro, sal, cf);
+      return { nome: p.nome, precoCartao: r.precoCartao, precoBase: r.precoBase };
+    }).sort((a, b) => a.precoCartao - b.precoCartao);
+    
+  let html = '<div class="prec-resumo-card">';
   html += '<div class="prec-resumo-header">Tabela de preços — catálogo</div>';
   resumoOrdenado.forEach(r => {
     const semVal = r.precoCartao <= 0;
@@ -2924,16 +2951,9 @@ function _renderPrecBody() {
     </div>`;
   });
   html += '</div>';
-
-  // Cards por peça
-  pecas.forEach((p, idx) => {
-    const d = getPrecPeca(p.id);
-    html += renderPrecCard(p, d, valorHora, custoFixoHora, idx);
-  });
-
-  el.innerHTML = html;
+  container.innerHTML = html;
 }
-
+  
 // Busca peça por nome e mostra sugestões. Clicar rola até o card.
 function buscarPecaPrec(termo) {
   const el = document.getElementById('prec-busca-result');
@@ -3227,6 +3247,8 @@ function recalcularCard(pecaId) {
   const totais = card.querySelectorAll('.prec-res-total .val');
   if (totais[0]) totais[0].textContent = fmtR(r.precoBase);
   if (totais[1]) totais[1].textContent = fmtR(r.precoCartao);
+  
+  atualizarTabelaResumo();
 }
 
 function toggleExibirCatalogo(pecaId, exibir) {
