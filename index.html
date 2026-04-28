@@ -1922,9 +1922,12 @@ function renderCatalogo() {
     });
   const html = pecasCatalogo.length ? pecasCatalogo.map(p => {
     const precoCartao = getPrecoPecaCalculado(p.id);
+    
+    // CORREÇÃO: Formatação cravada em 2 casas decimais para exibir como R$ 0,00
     const precoFmt = precoCartao
-      ? 'R$ ' + precoCartao.toLocaleString('pt-BR', {minimumFractionDigits:0})
+      ? 'R$ ' + precoCartao.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2})
       : '—';
+      
     return `<div class="piece-card" onclick="openPeca(${p.id})">
       <div>
         <div class="piece-name">${p.nome}</div>
