@@ -932,7 +932,6 @@
       <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
         <button class="btn-primary" style="width:auto;padding:0.45rem 0.7rem;margin:0;font-size:0.7rem" onclick="openPecaDePrec()">+ Nova peça</button>
         <button class="btn-primary" style="width:auto;padding:0.45rem 0.7rem;margin:0;font-size:0.7rem;background:rgba(107,143,113,0.12);color:var(--sage);border:1px solid rgba(107,143,113,0.35)" onclick="openMatGlobais()">🧪 Materiais</button>
-        <button class="btn-primary" style="width:auto;padding:0.45rem 0.8rem;margin:0;font-size:0.7rem;background:rgba(184,134,42,0.12);color:var(--brown);border:1px solid rgba(184,134,42,0.3)" onclick="salvarTodasPrecificacoes()">💾 Salvar tudo</button>
         <button class="btn-primary" style="width:auto;padding:0.45rem 0.7rem;margin:0;font-size:0.7rem;background:rgba(90,70,50,0.08);color:var(--muted);border:1px solid rgba(90,70,50,0.2)" onclick="openCustos()">⚙️ Custos</button>
       </div>
     </div>
@@ -1980,7 +1979,7 @@ async function savePeca() {
           if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }, 300);
       }, 200);
-    } else if (_pecaVeioDe === 'prec') {
+    } else {
       _renderPrecBody();
       _pecaVeioDe = null;
     }
