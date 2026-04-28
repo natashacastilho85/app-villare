@@ -3210,9 +3210,12 @@ function recalcularCard(pecaId) {
 
 function toggleExibirCatalogo(pecaId, exibir) {
   const d = getPrecPeca(pecaId);
-  d.exibirCatalogo = exibir;
-  salvarPrecLocal();
-  renderCatalogo();
+  if (d) {
+    d.exibirCatalogo = exibir;
+    salvarPrecLocal();
+    renderCatalogo(); // Atualiza a tela do catálogo
+    renderPecas();    // Atualiza a tela de precificação para a checkbox responder visualmente
+  }
 }
   
 function simularLucro(pecaId, valorVenda, custoTotalReal, precoCartao) {
