@@ -3098,7 +3098,7 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
       <label style="margin-left:0.4rem">Margem (%)</label>
       <input class="prec-lucro-input" type="number" min="0" max="99" step="1"
         value="${d.lucro}"
-        oninput="atualizarLucroPrec(${p.id}, this.value); simularLucro(${p.id}, document.querySelector('#prec-card-${p.id} .prec-simul-input').value, ${r.custoTotalReal.toFixed(2)})"
+        oninput="atualizarLucroPrec(${p.id}, this.value)">
       <label style="margin-left:0.4rem">Perda resina (%)</label>
       <input class="prec-lucro-input" type="number" min="0" max="50" step="1"
         value="${d.perdaResina ?? 5}"
@@ -3121,8 +3121,7 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
     <div class="prec-simul">
       <label>Simular: se vender por R$</label>
       <div class="prec-simul-row">
-        <input class="prec-simul-input" type="number" step="1" placeholder="ex: 1200"
-        oninput="simularLucro(${p.id}, this.value, ${r.custoTotalReal})">
+        <input class="prec-simul-input" type="number" step="1" placeholder="ex: 1200" oninput="simularLucro(${p.id}, this.value)">
         <span class="prec-simul-result" id="prec-simul-res-${p.id}">← digite o valor</span>
       </div>
     </div>
@@ -3334,7 +3333,7 @@ function toggleExibirCatalogo(pecaId, exibir) {
   }
 }
   
-function simularLucro(pecaId, valorVenda, custoTotal) {
+function simularLucro(pecaId, valorVenda) {
   const el = document.getElementById('prec-simul-res-' + pecaId);
   if (!el) return;
   
@@ -3344,20 +3343,29 @@ function simularLucro(pecaId, valorVenda, custoTotal) {
     return; 
   }
 
-  // Recebe o custo exato que o botão mandar
-  const custoReal = parseFloat(custoTotal) || 0;
-  if (custoReal === 0) {
-    el.innerHTML = '<span style="color:var(--bordeaux)">Erro: Custo zerado</span>';
-    return;
-  }
-
-  const tarifaCartao = getTarifaCartao(); 
+  // 1. O SIMULADOR FAZ A CONTA DO CUSTO NA HORA (Fim do problema do 0 ou dados antigos)
+  const d = getPrecPeca(pecaId);
+  const mins = d.tempo || getTotalProcessosMins() || 60;
+  const salario = getValorHora() * (mins / 60);
+  const custoFixo = getCustoFixoPorHora() * (mins / 60);
+  const perdaResina = (d.perdaResina ?? 5) / 100;
   
-  // A matemática limpa:
+  const materiaisComPerda = d.materiais.map(m => {
+    if ((m.nome || '').toLowerCase().includes('resina') && perdaResina > 0) {
+      return { ...m, valor: (parseFloat(m.valor) || 0) * (1 + perdaResina) };
+    }
+    return m;
+  });
+  
+  const r = calcPrec(materiaisComPerda, d.lucro, salario, custoFixo);
+  const custoReal = r.custoTotalReal;
+
+  // 2. MATEMÁTICA REAL
+  const tarifaCartao = getTarifaCartao(); 
   const valorLiquido = venda * (1 - tarifaCartao);
   const lucroValor = valorLiquido - custoReal;
   
-  // Margem sobre o custo (Markup), igual à sua precificação principal
+  // Margem sobre o custo
   const margemReal = (lucroValor / custoReal) * 100;
 
   const fmt = v => 'R$ ' + Math.abs(v).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
