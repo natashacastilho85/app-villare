@@ -1990,39 +1990,45 @@ function openMatGlobais() {
 }
 
 async function savePeca() {
-  const nome  = document.getElementById('p-nome').value.trim();
-  const desc  = document.getElementById('p-desc').value.trim();
+  const nome = document.getElementById('p-nome').value.trim();
+  const desc = document.getElementById('p-desc').value.trim();
   if (!nome) { alert('Preencha o nome da peça.'); return; }
+  
   try {
-    let novaPecaId = null;
-    if (editandoPecaId===null) {
-      const [r] = await sbInsert('pecas', { nome, valor: 0, descricao:desc });
+    let idParaFocar = editandoPecaId;
+
+    if (editandoPecaId === null) {
+      const [r] = await sbInsert('pecas', { nome, valor: 0, descricao: desc });
       pecas.push(mapPeca(r));
-      novaPecaId = r.id;
+      idParaFocar = r.id;
     } else {
-      await sbUpdate('pecas', editandoPecaId, { nome, descricao:desc });
-      const p = pecas.find(x=>x.id===editandoPecaId);
-      p.nome=nome; p.desc=desc;
+      await sbUpdate('pecas', editandoPecaId, { nome, descricao: desc });
+      const p = pecas.find(x => x.id === editandoPecaId);
+      if (p) { p.nome = nome; p.desc = desc; }
     }
+
     renderCatalogo();
     closeDrawer('drawer-peca');
-    // Se for nova peça (não edição), abre direto a tabela de precificação dela
-    if (novaPecaId !== null) {
-      // Garante que a peça começa com tabela vazia (sem itens demo)
-      precDados[novaPecaId] = { lucro: 40, materiais: [] };
+
+    // Se veio da precificação, reconstrói a tela e pula para a peça certa
+    if (_pecaVeioDe === 'prec' || document.getElementById('drawer-prec').classList.contains('open')) {
       _renderPrecBody();
+      
       setTimeout(() => {
-        openDrawer('drawer-prec');
-        setTimeout(() => {
-          const card = document.getElementById('prec-card-' + novaPecaId);
-          if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }, 300);
-      }, 200);
-    } else {
-      _renderPrecBody();
-      _pecaVeioDe = null;
+        const card = document.getElementById('prec-card-' + idParaFocar);
+        if (card) {
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Destaque visual para você ter certeza de que é ela
+          card.style.transition = 'all 0.5s';
+          card.style.boxShadow = '0 0 15px rgba(184, 134, 42, 0.4)';
+          setTimeout(() => card.style.boxShadow = '', 1500);
+        }
+      }, 500);
     }
-  } catch(e) { alert('Erro ao salvar peça: '+e.message); }
+    
+    _pecaVeioDe = null;
+
+  } catch(e) { alert('Erro ao salvar peça: ' + e.message); }
 }
 
 async function deletePeca() {
