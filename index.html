@@ -3334,7 +3334,7 @@ function toggleExibirCatalogo(pecaId, exibir) {
   }
 }
   
-function simularLucro(pecaId, valorVenda) {
+function simularLucro(pecaId, valorVenda, custoTotal) {
   const el = document.getElementById('prec-simul-res-' + pecaId);
   if (!el) return;
   
@@ -3344,17 +3344,21 @@ function simularLucro(pecaId, valorVenda) {
     return; 
   }
 
-  // BUSCA O CUSTO REAL DA PEÇA ATUAL (SEM ERRO)
-  const d = getPrecPeca(pecaId);
-  const custoAtual = d.custoTotalReal || 0;
+  // Recebe o custo exato que o botão mandar
+  const custoReal = parseFloat(custoTotal) || 0;
+  if (custoReal === 0) {
+    el.innerHTML = '<span style="color:var(--bordeaux)">Erro: Custo zerado</span>';
+    return;
+  }
+
   const tarifaCartao = getTarifaCartao(); 
   
-  // Faz a conta matemática honesta
+  // A matemática limpa:
   const valorLiquido = venda * (1 - tarifaCartao);
-  const lucroValor = valorLiquido - custoAtual;
+  const lucroValor = valorLiquido - custoReal;
   
-  // Calcula a margem baseada no custo da peça que está na tela
-  const margemReal = (lucroValor / custoAtual) * 100;
+  // Margem sobre o custo (Markup), igual à sua precificação principal
+  const margemReal = (lucroValor / custoReal) * 100;
 
   const fmt = v => 'R$ ' + Math.abs(v).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
   const cor = lucroValor >= 0 ? 'var(--sage)' : 'var(--bordeaux)';
