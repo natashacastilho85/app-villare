@@ -750,7 +750,6 @@
   </div>
 </div>
 
-<!-- DRAWER EDITAR CONTRATO -->
 <div class="drawer-overlay" id="drawer-edit" onclick="fecharEditContrato()">
   <div class="drawer" onclick="event.stopPropagation()" style="max-height:95vh">
     <div class="drawer-handle"></div>
@@ -764,36 +763,6 @@
     <div class="field-row">
       <div class="field-group"><label class="field-label">Cidade</label><input class="field-input" id="e-cidade" type="text"></div>
       <div class="field-group"><label class="field-label">Estado</label><input class="field-input" id="e-estado" type="text" maxlength="2"></div>
-    </div>
-
-    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(184,134,42,0.2);">
-      <div style="font-family:'Calibri',serif; font-size: 1.1rem; color: var(--brown); margin-bottom: 1rem;">Dados da Ficha de Produção</div>
-      
-      <div class="field-group"><label class="field-label">Nome da Noiva</label><input type="text" id="e-f-noiva" class="field-input"></div>
-      <div class="field-group"><label class="field-label">Nome do Noivo</label><input type="text" id="e-f-noivo" class="field-input"></div>
-      <div class="field-group"><label class="field-label">Instagram</label><input type="text" id="e-f-insta" class="field-input"></div>
-      
-      <div style="display:flex; gap:0.5rem">
-        <div class="field-group" style="flex:1"><label class="field-label">Cerimonialista</label><input type="text" id="e-f-cerimonial" class="field-input"></div>
-        <div class="field-group" style="flex:1"><label class="field-label">Quem indicou?</label><input type="text" id="e-f-indicacao" class="field-input"></div>
-      </div>
-
-      <div style="display:flex; gap:0.5rem">
-        <div class="field-group" style="flex:1">
-          <label class="field-label">Iniciais/Data?</label>
-          <select id="e-f-iniciais" class="field-input"><option>Não</option><option>Sim</option></select>
-        </div>
-        <div class="field-group" style="flex:1">
-          <label class="field-label">Espelho?</label>
-          <select id="e-f-espelho" class="field-input"><option>Não</option><option>Sim</option></select>
-        </div>
-      </div>
-
-      <button type="button" class="btn-primary" style="background:rgba(107,143,113,0.1); color:var(--sage); border:1px solid rgba(107,143,113,0.3); margin-top: 0.5rem; margin-bottom: 1.5rem;" 
-              <div class="field-group" style="margin-top: 1rem;">
-        <label class="field-label">Observações Gerais da Produção</label>
-        <textarea id="e-f-obs-geral" class="field-input" rows="3" placeholder="Flores, cores, detalhes do fundo..."></textarea>
-      </div>
     </div>
     <div class="field-row">
       <div class="field-group"><label class="field-label">Buquê recebido</label><input class="field-input" id="e-chegada" type="date"></div>
@@ -836,35 +805,38 @@
       <label class="field-label">Desconto (R$)</label>
       <input class="field-input" id="e-desconto" type="number" placeholder="0,00" step="0.01" min="0">
     </div>
-    <!-- Reserva: entrada -->
-    <div class="field-group" id="e-grp-pago-reserva" style="display:none">
-      <label class="field-label">Entrada já recebida (R$)</label>
-      <input class="field-input" id="e-pago" type="number" placeholder="Mín. R$ 300,00" step="0.01" min="0">
-      <div class="field-hint visible" style="font-size:0.65rem;color:var(--muted);margin-top:0.3rem">Aviso: alterar este valor recria o registro de entrada inicial. Pagamentos posteriores feitos no detalhe são preservados.</div>
-    </div>
-    <!-- Misto: Pix + Cartão -->
-    <div id="e-grp-pago-misto" style="display:none">
-      <div class="field-row">
-        <div class="field-group">
-          <label class="field-label">Pago em Pix (R$)</label>
-          <input class="field-input" id="e-pago-pix" type="number" placeholder="0,00" step="0.01" min="0">
+
+    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(184,134,42,0.2);">
+      <div style="font-family:'Calibri',serif; font-size: 1.1rem; color: var(--brown); margin-bottom: 1rem;">Dados da Ficha de Produção</div>
+      
+      <div class="field-group"><label class="field-label">Nome da Noiva</label><input type="text" id="e-f-noiva" class="field-input"></div>
+      <div class="field-group"><label class="field-label">Nome do Noivo</label><input type="text" id="e-f-noivo" class="field-input"></div>
+      <div class="field-group"><label class="field-label">Instagram</label><input type="text" id="e-f-insta" class="field-input"></div>
+      
+      <div style="display:flex; gap:0.5rem">
+        <div class="field-group" style="flex:1"><label class="field-label">Cerimonialista</label><input type="text" id="e-f-cerimonial" class="field-input"></div>
+        <div class="field-group" style="flex:1"><label class="field-label">Quem indicou?</label><input type="text" id="e-f-indicacao" class="field-input"></div>
+      </div>
+
+      <div style="display:flex; gap:0.5rem">
+        <div class="field-group" style="flex:1">
+          <label class="field-label">Iniciais/Data?</label>
+          <select id="e-f-iniciais" class="field-input"><option>Não</option><option>Sim</option></select>
         </div>
-        <div class="field-group">
-          <label class="field-label">Pago em Cartão (R$)</label>
-          <input class="field-input" id="e-pago-cartao" type="number" placeholder="0,00" step="0.01" min="0">
+        <div class="field-group" style="flex:1">
+          <label class="field-label">Espelho?</label>
+          <select id="e-f-espelho" class="field-input"><option>Não</option><option>Sim</option></select>
         </div>
       </div>
-      <div class="field-group">
-        <label class="field-label">Parcelas no cartão</label>
-        <select class="field-input" id="e-pago-cartao-parc">
-          <option value="3">Até 3× (taxa 7,01%)</option>
-          <option value="4">4× ou mais (sem taxa pra você)</option>
-        </select>
+      
+      <div class="field-group" style="margin-top: 1rem;">
+        <label class="field-label">Observações Gerais da Produção</label>
+        <textarea id="e-f-obs-geral" class="field-input" rows="3" placeholder="Flores, cores, detalhes do fundo..."></textarea>
       </div>
-      <div class="field-hint visible" style="font-size:0.65rem;color:var(--muted);margin-top:-0.3rem;margin-bottom:0.6rem">Aviso: alterar estes valores recria os registros iniciais de Pix/Cartão. Pagamentos posteriores feitos no detalhe são preservados.</div>
     </div>
-  <button type="button" class="btn-primary" style="background:rgba(107,143,113,0.1); color:var(--sage); border:1px solid rgba(107,143,113,0.3); margin-bottom: 0.5rem;" onclick="imprimirFichaPeloForm('e')">🖨️ Imprimir Ficha Agora</button>  
-  <button class="btn-primary" onclick="saveEditContrato()">Salvar alterações</button>
+
+    <button type="button" class="btn-primary" style="background:rgba(107,143,113,0.1); color:var(--sage); border:1px solid rgba(107,143,113,0.3); margin-top: 0.5rem; margin-bottom: 1.5rem;" onclick="imprimirFichaPeloForm('e')">🖨️ Imprimir Ficha Agora</button>
+    <button class="btn-primary" onclick="saveEditContrato()">Salvar alterações</button>
     <button class="btn-secondary" onclick="fecharEditContrato()">Cancelar</button>
     <button onclick="excluirContrato()" style="width:100%;background:transparent;border:1px solid rgba(122,37,53,0.3);border-radius:4px;padding:0.75rem;color:var(--bordeaux);font-family:'Calibri',sans-serif;font-size:0.75rem;cursor:pointer;margin-top:0.4rem">Excluir contrato</button>
   </div>
