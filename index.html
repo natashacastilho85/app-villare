@@ -3334,39 +3334,32 @@ function toggleExibirCatalogo(pecaId, exibir) {
   }
 }
   
-function simularLucro(pecaId, valorVenda, custoTotalReal) {
+function simularLucro(pecaId, valorVenda) {
   const el = document.getElementById('prec-simul-res-' + pecaId);
   if (!el) return;
   
   const venda = parseFloat(valorVenda);
-  
-  // Se o campo estiver vazio ou for zero, limpamos a mensagem
   if (!venda || venda <= 0) { 
     el.innerHTML = '← digite o valor'; 
     return; 
   }
 
-  // 1. Pegamos a taxa do cartão configurada no seu sistema
+  // BUSCA O CUSTO REAL DA PEÇA ATUAL (SEM ERRO)
+  const d = getPrecPeca(pecaId);
+  const custoAtual = d.custoTotalReal || 0;
   const tarifaCartao = getTarifaCartao(); 
   
-  // 2. Calculamos quanto sobra depois que o banco tira a taxa dele
+  // Faz a conta matemática honesta
   const valorLiquido = venda * (1 - tarifaCartao);
+  const lucroValor = valorLiquido - custoAtual;
   
-  // 3. O lucro em Reais é o valor líquido menos o custo da peça
-  const lucroValor = valorLiquido - custoTotalReal;
-  
-  // 4. A MARGEM CORRETA (Markup): O lucro comparado ao custo.
-  // Assim, se você vender pelo preço sugerido, a margem baterá certinho com o que você definiu.
-  const margemReal = (lucroValor / custoTotalReal) * 100;
+  // Calcula a margem baseada no custo da peça que está na tela
+  const margemReal = (lucroValor / custoAtual) * 100;
 
-  // Formatação de cores e moeda
   const fmt = v => 'R$ ' + Math.abs(v).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
   const cor = lucroValor >= 0 ? 'var(--sage)' : 'var(--bordeaux)';
-  
-  // Aviso caso o valor digitado resulte em prejuízo
   const avisoPrejuizo = lucroValor < 0 ? ` <span style="font-size:0.7rem;color:var(--bordeaux)">⚠ Prejuízo!</span>` : '';
 
-  // Escreve o resultado na tela
   el.innerHTML = `<span style="color:${cor}"><strong>${margemReal.toFixed(1)}% de margem real</strong> · lucro ${fmt(lucroValor)}</span>${avisoPrejuizo}`;
 }
 
