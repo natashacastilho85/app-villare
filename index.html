@@ -4065,7 +4065,36 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// --- INÍCIO DA CORREÇÃO BLINDADA (MARKUP E LUCRO) ---
+// --- INÍCIO DA CORREÇÃO BLINDADA FINAL (SEM BUSCA, SEM PROCESSOS, COM MARKUP) ---
+
+window._renderPrecBody = function() {
+  const valorHora = typeof getValorHora === 'function' ? getValorHora() : 0;
+  const custoFixoHora = typeof getCustoFixoPorHora === 'function' ? getCustoFixoPorHora() : 0;
+  
+  pecas.sort((a, b) => a.nome.localeCompare(b.nome));
+  const el = document.getElementById('prec-body');
+  if (!el) return;
+  
+  if (!pecas.length) {
+    el.innerHTML = '<div class="cal-empty">Nenhuma peça cadastrada ainda.</div>';
+    return;
+  }
+
+  // A BARRA DE BUSCA FOI TOTALMENTE REMOVIDA DAQUI
+  
+  // Cria apenas o container da Tabela de Resumo (que agora é sua navegação)
+  let html = '<div id="prec-resumo-container"></div>';
+
+  // Desenha os cards das peças (agora sem os processos)
+  pecas.forEach((p, idx) => {
+    const d = getPrecPeca(p.id);
+    html += window.renderPrecCard(p, d, valorHora, custoFixoHora, idx);
+  });
+
+  el.innerHTML = html;
+  
+  if (typeof atualizarTabelaResumo === 'function') atualizarTabelaResumo();
+};
 
 window.calcPrec = function(materiais, lucro, salario, custoFixoHora) {
   const custoMat = materiais.reduce((s, m) => s + (parseFloat(m.valor) || 0), 0);
@@ -4142,7 +4171,7 @@ window.recalcularCard = function(pecaId) {
   if (rows[1]) rows[1].textContent = fmtR(salario);
   if (rows[2]) rows[2].textContent = fmtR(custoFixo);
   if (rows[3]) rows[3].textContent = fmtR(r.custoTotalReal);
-  if (rows[4]) rows[4].textContent = fmtR(r.valorLucro); // Linha do Lucro Real
+  if (rows[4]) rows[4].textContent = fmtR(r.valorLucro); 
   
   const totais = card.querySelectorAll('.prec-res-total .val');
   if (totais[0]) totais[0].textContent = fmtR(r.precoBase);
@@ -4190,11 +4219,6 @@ window.renderPrecCard = function(p, d, valorHora, custoFixoHora, cardIdx) {
     '</div>';
   }).join('');
 
-  let procHtml = '';
-  if (typeof renderProcessosPeca === 'function') {
-     procHtml = renderProcessosPeca(p.id, d);
-  }
-
   return '<div class="prec-peca-card' + (cardIdx % 2 === 1 ? ' par' : '') + '" id="prec-card-' + p.id + '">' +
     '<div class="prec-peca-header" style="display: flex; align-items: center; justify-content: space-between; padding: 0.8rem 1rem; background: rgba(184,134,42,0.05); border-bottom: 1px solid rgba(184,134,42,0.12);">' +
       '<span class="prec-peca-nome" onclick="openPeca(' + p.id + ')" style="cursor:pointer; font-family:\'Calibri\',serif; font-size:1.1rem; color:var(--dark);" title="Editar nome">' + p.nome + ' ✏️</span>' +
@@ -4216,7 +4240,6 @@ window.renderPrecCard = function(p, d, valorHora, custoFixoHora, cardIdx) {
       '<label style="margin-left:0.4rem">Perda resina (%)</label>' +
       '<input class="prec-lucro-input" type="number" min="0" max="50" step="1" value="' + (d.perdaResina !== undefined ? d.perdaResina : 5) + '" oninput="atualizarPerdaResina(' + p.id + ', this.value)">' +
     '</div>' +
-    procHtml + 
     '<div class="prec-resultado">' +
       '<div class="prec-res-row"><span class="lbl">Custo materiais</span><span class="val">' + fmtR(r.custoMat) + '</span></div>' +
       '<div class="prec-res-row"><span class="lbl">Salário (mão de obra)</span><span class="val">' + fmtR(salario) + '</span></div>' +
@@ -4250,7 +4273,7 @@ window.renderPrecCard = function(p, d, valorHora, custoFixoHora, cardIdx) {
   '</div>';
 };
 
-// --- FIM DA CORREÇÃO BLINDADA ---
+// --- FIM DA CORREÇÃO BLINDADA FINAL ---
 </script>
 </body>
 </html>
