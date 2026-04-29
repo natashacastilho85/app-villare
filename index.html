@@ -1483,6 +1483,29 @@ async function saveContrato() {
   } catch(e) { alert('Erro ao salvar: ' + e.message); }
 }
 
+function gerarPagamentosIniciais(forma, valor) {
+  const hoje = new Date().toISOString().split('T')[0];
+  if (forma === 'pix') {
+    return [{ data: hoje, valor: valor, forma: 'Pix', status: 'Realizado' }];
+  } else if (forma === '3x') {
+    return [{ data: hoje, valor: valor, forma: 'Cartão', parcelas: 3, status: 'Realizado' }];
+  } else if (forma === '4x') {
+    return [{ data: hoje, valor: valor, forma: 'Cartão', parcelas: 4, status: 'Realizado' }];
+  } else if (forma === 'reserva') {
+    const pagoEntrada = parseFloat(document.getElementById('c-pago').value) || 0;
+    return [{ data: hoje, valor: pagoEntrada, forma: 'Pix', status: 'Realizado' }];
+  } else if (forma === 'misto') {
+    const pPix = parseFloat(document.getElementById('c-pago-pix').value) || 0;
+    const pCartao = parseFloat(document.getElementById('c-pago-cartao').value) || 0;
+    const parc = document.getElementById('c-pago-cartao-parc').value;
+    const p = [];
+    if (pPix > 0) p.push({ data: hoje, valor: pPix, forma: 'Pix', status: 'Realizado' });
+    if (pCartao > 0) p.push({ data: hoje, valor: pCartao, forma: 'Cartão', parcelas: parc, status: 'Realizado' });
+    return p;
+  }
+  return [];
+}
+  
 function round2(v) { return Math.round((parseFloat(v)||0) * 100) / 100; }
 
 function getPrecoPecaCalculado(pecaId) {
