@@ -449,7 +449,7 @@
     </div>
 
     <!-- CONTRATOS -->
-    <div class="screen" id="screen-contratos">
+   <div class="screen" id="screen-contratos">
       
       <div style="margin-bottom: 12px;">
         <input type="text" id="busca-contrato" placeholder="🔍 Buscar noiva por nome..." 
@@ -458,8 +458,18 @@
       </div>
 
       <div class="filter-row" id="filter-row">
+        <div class="filter-chip active" data-status="todos">Todos</div>
+        <div class="filter-chip" data-status="Reserva">Reserva</div>
+        <div class="filter-chip" data-status="Aguardando">Aguardando</div>
+        <div class="filter-chip" data-status="Produção">Produção</div>
+        <div class="filter-chip" data-status="Concluído">Concluído</div>
+        <div class="filter-chip" data-status="Enviado">Enviado</div>
+        <div class="filter-chip" data-status="Cancelado">Cancelado</div>
+        <div class="filter-chip" data-status="devedor">Devedor</div>
+      </div>
+      <div id="contratos-list"></div>
+    </div>
 
-    <!-- CALENDÁRIO -->
     <div class="screen" id="screen-calendario">
       <div id="calendario-list"></div>
     </div>
