@@ -3339,7 +3339,7 @@ function toggleExibirCatalogo(pecaId, exibir) {
   }
 }
   
-function simularLucro(pecaId, valorVenda) {
+function simularLucro(pecaId, valorVenda, custoIgnorado) {
   const el = document.getElementById('prec-simul-res-' + pecaId);
   if (!el) return;
   
@@ -3349,13 +3349,13 @@ function simularLucro(pecaId, valorVenda) {
     return; 
   }
 
-  // 1. O SIMULADOR FAZ A CONTA DO CUSTO NA HORA (Fim do problema do 0 ou dados antigos)
+  // 1. O simulador calcula o custo exato AGORA, blindado contra erros e dados antigos
   const d = getPrecPeca(pecaId);
   const mins = d.tempo || getTotalProcessosMins() || 60;
   const salario = getValorHora() * (mins / 60);
   const custoFixo = getCustoFixoPorHora() * (mins / 60);
-  const perdaResina = (d.perdaResina ?? 5) / 100;
   
+  const perdaResina = (d.perdaResina ?? 5) / 100;
   const materiaisComPerda = d.materiais.map(m => {
     if ((m.nome || '').toLowerCase().includes('resina') && perdaResina > 0) {
       return { ...m, valor: (parseFloat(m.valor) || 0) * (1 + perdaResina) };
@@ -3363,22 +3363,22 @@ function simularLucro(pecaId, valorVenda) {
     return m;
   });
   
-  const r = calcPrec(materiaisComPerda, d.lucro, salario, custoFixo);
-  const custoReal = r.custoTotalReal;
+  const custoTotalReal = materiaisComPerda.reduce((s, m) => s + (parseFloat(m.valor) || 0), 0) + salario + custoFixo;
 
-  // 2. MATEMÁTICA REAL
-  const tarifaCartao = getTarifaCartao(); 
-  const valorLiquido = venda * (1 - tarifaCartao);
-  const lucroValor = valorLiquido - custoReal;
-  
-  // Margem sobre o custo
-  const margemReal = (lucroValor / custoReal) * 100;
+  // 2. Tira a taxa do cartão do valor que você simulou
+  const tarifaCartao = getTarifaCartao();
+  const vendaLiquida = venda * (1 - tarifaCartao);
 
+  // 3. Aplica a fórmula inversa do Markup: Margem = (Venda Líquida - Custo) / Venda Líquida
+  const margemCalculada = ((vendaLiquida - custoTotalReal) / vendaLiquida) * 100;
+
+  // 4. Exibe o resultado na tela
+  const lucroEmReais = vendaLiquida - custoTotalReal;
   const fmt = v => 'R$ ' + Math.abs(v).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
-  const cor = lucroValor >= 0 ? 'var(--sage)' : 'var(--bordeaux)';
-  const avisoPrejuizo = lucroValor < 0 ? ` <span style="font-size:0.7rem;color:var(--bordeaux)">⚠ Prejuízo!</span>` : '';
+  const cor = margemCalculada >= 0 ? 'var(--sage)' : 'var(--bordeaux)';
+  const avisoPrejuizo = lucroEmReais < 0 ? ` <span style="font-size:0.7rem;color:var(--bordeaux)">⚠ Prejuízo!</span>` : '';
 
-  el.innerHTML = `<span style="color:${cor}"><strong>${margemReal.toFixed(1)}% de margem real</strong> · lucro ${fmt(lucroValor)}</span>${avisoPrejuizo}`;
+  el.innerHTML = `<span style="color:${cor}"><strong>${margemCalculada.toFixed(1)}% de margem</strong> · lucro ${fmt(lucroEmReais)}</span>${avisoPrejuizo}`;
 }
 
 // ── MATERIAIS GLOBAIS ──
