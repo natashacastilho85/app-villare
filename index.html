@@ -2872,7 +2872,7 @@ function salvarCustos() {
 function _renderPrecBody() {
   const valorHora     = getValorHora();
   const custoFixoHora = getCustoFixoPorHora();
-
+pecas.sort((a, b) => a.nome.localeCompare(b.nome));
   const el = document.getElementById('prec-body');
   if (!el) return;
   if (!pecas.length) {
