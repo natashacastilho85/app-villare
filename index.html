@@ -2627,17 +2627,23 @@ function getPrecPeca(pecaId) {
 }
 
 function calcPrec(materiais, lucro, salario, custoFixoHora) {
+  // 1. Soma todos os custos
   const custoMat = materiais.reduce((s, m) => s + (parseFloat(m.valor) || 0), 0);
   const custoTotalReal = custoMat + salario + custoFixoHora;
-  const margemLucro = lucro / 100;
-  const precoBase = margemLucro < 1 ? custoTotalReal / (1 - margemLucro) : custoTotalReal * 2;
-  const tarifaCartao = getTarifaCartao();
+  
+  // 2. Aplica a regra do Markup Divisor: Preço = Custo / (1 - Margem)
+  const margemPercentual = (parseFloat(lucro) || 0) / 100;
+  const divisor = 1 - margemPercentual;
+  
+  // O 'if' evita erro matemático caso a margem seja 100% ou mais
+  const precoBase = divisor > 0 ? custoTotalReal / divisor : custoTotalReal;
+  
+  // 3. Aplica a tarifa do cartão sobre o Preço Base
+  const tarifaCartao = getTarifaCartao(); 
   const precoCartao = precoBase / (1 - tarifaCartao);
 
-  // Lógica para cravar sempre no 7 (122 vira 127, 128 vira 127)
   function paraFinal7(valor) {
     if (!valor || valor <= 0) return 0;
-    // Pega a dezena inteira (ex: 128 / 10 = 12.8 -> vira 12) e adiciona o 7
     return Math.floor(valor / 10) * 10 + 7;
   }
 
