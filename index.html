@@ -2010,20 +2010,21 @@ async function savePeca() {
     renderCatalogo();
     closeDrawer('drawer-peca');
 
-    // Se veio da precificação, reconstrói a tela e pula para a peça certa
     if (_pecaVeioDe === 'prec' || document.getElementById('drawer-prec').classList.contains('open')) {
       _renderPrecBody();
       
       setTimeout(() => {
         const card = document.getElementById('prec-card-' + idParaFocar);
         if (card) {
-          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          // Destaque visual para você ter certeza de que é ela
+          // 'start' faz o TOPO do card encostar no TOPO da tela
+          card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          
+          // Efeitinho visual para você não se perder
           card.style.transition = 'all 0.5s';
           card.style.boxShadow = '0 0 15px rgba(184, 134, 42, 0.4)';
           setTimeout(() => card.style.boxShadow = '', 1500);
         }
-      }, 500);
+      }, 500); // Meio segundo de espera para a lista carregar e o pulo acontecer
     }
     
     _pecaVeioDe = null;
