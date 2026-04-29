@@ -3195,33 +3195,29 @@ async function duplicarPecaPrec(pecaId) {
     
     recalcularCard(novaId);
     await salvarPrecLocal();
-    renderCatalogo();
-    _renderPrecBody();
+    _renderPrecBody(); // Aqui ele já reordena de A a Z
 
-    // COMANDO DE ROLAR A TELA (REFORÇADO)
+    // ROLAR A TELA ATÉ A PEÇA NOVA
     setTimeout(() => {
       const card = document.getElementById('prec-card-' + novaId);
       if (card) {
-        // Rola suavemente até o card novo
         card.scrollIntoView({ behavior: 'smooth', block: 'center' });
         
-        // Brilho dourado para você identificar a peça nova na hora
+        // Brilho dourado de destaque
         card.style.transition = 'all 0.5s';
-        card.style.boxShadow = '0 0 15px var(--gold)';
+        card.style.boxShadow = '0 0 20px rgba(184, 134, 42, 0.5)';
         setTimeout(() => card.style.boxShadow = '', 2000);
 
-        // Força o cálculo da simulação
+        // Força o simulador
         const d = getPrecPeca(novaId);
         const campoSimulacao = card.querySelector('.prec-simul-input');
         if (campoSimulacao && campoSimulacao.value) {
           simularLucro(novaId, campoSimulacao.value, d.custoTotalReal || 0);
         }
       }
-    }, 600); // Um pouquinho mais de tempo para o sistema "respirar" e rolar
+    }, 500);
 
-  } catch(e) { 
-    alert('Erro ao duplicar: ' + e.message); 
-  }
+  } catch(e) { alert('Erro ao duplicar: ' + e.message); }
 }
 
 function atualizarPerdaResina(pecaId, val) {
