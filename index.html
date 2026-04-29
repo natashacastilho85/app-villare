@@ -3066,14 +3066,24 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
   return `<div class="prec-peca-card${cardIdx % 2 === 1 ? ' par' : ''}" id="prec-card-${p.id}">
     <div class="prec-peca-header">
       <span class="prec-peca-nome" onclick="openPeca(${p.id})" style="cursor:pointer" title="Editar nome">${p.nome} ✏️</span>
-      <button onclick="duplicarPecaPrec(${p.id})" title="Duplicar peça" style="background:none;border:none;color:var(--brown);font-size:0.75rem;cursor:pointer;padding:0.2rem 0.4rem;border-radius:3px;opacity:0.7">⧉</button>
-      <button onclick="excluirPecaPrec(${p.id})" title="Excluir peça da precificação" style="background:none;border:none;color:var(--bordeaux);font-size:0.75rem;cursor:pointer;padding:0.2rem 0.4rem;border-radius:3px;opacity:0.7">🗑</button>
-    <label style="display:flex;align-items:center;gap:0.25rem;font-size:0.65rem;color:var(--muted);cursor:pointer;margin-left:auto;white-space:nowrap" title="Exibir no catálogo">
-        <input type="checkbox" ${d.exibirCatalogo !== false ? 'checked' : ''}
-          onchange="toggleExibirCatalogo(${p.id}, this.checked)"
-          style="accent-color:var(--brown);width:13px;height:13px;cursor:pointer;flex-shrink:0">
-        Catálogo
-      </label>
+      
+      <div style="display:flex; gap:0.8rem; margin-left:auto; align-items:center;">
+        <button onclick="duplicarPecaPrec(${p.id})" title="Duplicar peça" 
+                style="background:none; border:none; color:var(--muted); font-size:1.1rem; cursor:pointer; padding:0; opacity:0.8;">
+                ⧉
+        </button>
+        <button onclick="excluirPecaPrec(${p.id})" title="Excluir peça" 
+                style="background:none; border:none; color:var(--muted); font-size:1.1rem; cursor:pointer; padding:0; opacity:0.8;">
+                🗑️
+        </button>
+        
+        <label style="display:flex; align-items:center; gap:0.3rem; font-size:0.65rem; color:var(--muted); cursor:pointer;">
+          <input type="checkbox" ${d.exibirCatalogo !== false ? 'checked' : ''}
+            onchange="toggleExibirCatalogo(${p.id}, this.checked)"
+            style="accent-color:var(--brown); width:13px; height:13px; cursor:pointer;">
+          Catálogo
+        </label>
+      </div>
     </div>
     ${matRows}
     <button class="prec-add-btn" onclick="adicionarMatPrec(${p.id})">＋ Adicionar material</button>
