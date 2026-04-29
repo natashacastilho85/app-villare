@@ -595,7 +595,34 @@
       <div class="field-group"><label class="field-label">Cidade</label><input class="field-input" id="c-cidade" type="text" placeholder="Cidade"></div>
       <div class="field-group"><label class="field-label">Estado</label><input class="field-input" id="c-estado" type="text" placeholder="SP" maxlength="2"></div>
     </div>
-    <div class="field-group">
+
+    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(184,134,42,0.2);">
+      <div style="font-family:'Calibri',serif; font-size: 1.1rem; color: var(--brown); margin-bottom: 1rem;">Dados da Ficha de Produção</div>
+      
+      <div class="field-group"><label class="field-label">Nome da Noiva</label><input type="text" id="c-f-noiva" class="field-input"></div>
+      <div class="field-group"><label class="field-label">Nome do Noivo</label><input type="text" id="c-f-noivo" class="field-input"></div>
+      <div class="field-group"><label class="field-label">Instagram</label><input type="text" id="c-f-insta" class="field-input"></div>
+      
+      <div style="display:flex; gap:0.5rem">
+        <div class="field-group" style="flex:1"><label class="field-label">Cerimonialista</label><input type="text" id="c-f-cerimonial" class="field-input"></div>
+        <div class="field-group" style="flex:1"><label class="field-label">Quem indicou?</label><input type="text" id="c-f-indicacao" class="field-input"></div>
+      </div>
+
+      <div style="display:flex; gap:0.5rem">
+        <div class="field-group" style="flex:1">
+          <label class="field-label">Iniciais/Data?</label>
+          <select id="c-f-iniciais" class="field-input"><option>Não</option><option>Sim</option></select>
+        </div>
+        <div class="field-group" style="flex:1">
+          <label class="field-label">Espelho?</label>
+          <select id="c-f-espelho" class="field-input"><option>Não</option><option>Sim</option></select>
+        </div>
+      </div>
+
+      <button type="button" class="btn-primary" style="background:rgba(107,143,113,0.1); color:var(--sage); border:1px solid rgba(107,143,113,0.3); margin-top: 0.5rem; margin-bottom: 1.5rem;" 
+              onclick="imprimirFichaPeloForm('c')">🖨️ Imprimir Ficha Agora</button>
+    </div>
+        <div class="field-group">
       <label class="field-label">Recebimento do buquê</label>
       <select class="field-input" id="c-envio">
         <option>Correios</option>
@@ -736,6 +763,33 @@
     <div class="field-row">
       <div class="field-group"><label class="field-label">Cidade</label><input class="field-input" id="e-cidade" type="text"></div>
       <div class="field-group"><label class="field-label">Estado</label><input class="field-input" id="e-estado" type="text" maxlength="2"></div>
+    </div>
+
+    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(184,134,42,0.2);">
+      <div style="font-family:'Calibri',serif; font-size: 1.1rem; color: var(--brown); margin-bottom: 1rem;">Dados da Ficha de Produção</div>
+      
+      <div class="field-group"><label class="field-label">Nome da Noiva</label><input type="text" id="e-f-noiva" class="field-input"></div>
+      <div class="field-group"><label class="field-label">Nome do Noivo</label><input type="text" id="e-f-noivo" class="field-input"></div>
+      <div class="field-group"><label class="field-label">Instagram</label><input type="text" id="e-f-insta" class="field-input"></div>
+      
+      <div style="display:flex; gap:0.5rem">
+        <div class="field-group" style="flex:1"><label class="field-label">Cerimonialista</label><input type="text" id="e-f-cerimonial" class="field-input"></div>
+        <div class="field-group" style="flex:1"><label class="field-label">Quem indicou?</label><input type="text" id="e-f-indicacao" class="field-input"></div>
+      </div>
+
+      <div style="display:flex; gap:0.5rem">
+        <div class="field-group" style="flex:1">
+          <label class="field-label">Iniciais/Data?</label>
+          <select id="e-f-iniciais" class="field-input"><option>Não</option><option>Sim</option></select>
+        </div>
+        <div class="field-group" style="flex:1">
+          <label class="field-label">Espelho?</label>
+          <select id="e-f-espelho" class="field-input"><option>Não</option><option>Sim</option></select>
+        </div>
+      </div>
+
+      <button type="button" class="btn-primary" style="background:rgba(107,143,113,0.1); color:var(--sage); border:1px solid rgba(107,143,113,0.3); margin-top: 0.5rem; margin-bottom: 1.5rem;" 
+              onclick="imprimirFichaPeloForm('e')">🖨️ Imprimir Ficha Agora</button>
     </div>
     <div class="field-row">
       <div class="field-group"><label class="field-label">Buquê recebido</label><input class="field-input" id="e-chegada" type="date"></div>
@@ -3654,6 +3708,51 @@ async function salvarEImprimirFicha() {
   }
 }
 
+  function imprimirFichaPeloForm(prefixo) {
+  // Coleta os dados que estão na tela agora
+  const nomeNoiva = document.getElementById(prefixo + '-f-noiva').value;
+  const nomeNoivo = document.getElementById(prefixo + '-f-noivo').value;
+  
+  const contratoFake = {
+    nome: document.getElementById(prefixo + '-nome').value || 'Nova Noiva',
+    casamento: document.getElementById(prefixo + '-casamento').value,
+    cidade: document.getElementById(prefixo + '-cidade').value,
+    estado: document.getElementById(prefixo + '-estado').value,
+    valorBruto: 0, 
+    pecas: []
+  };
+
+  // Coleta as peças da lista
+  const linhas = document.querySelectorAll('#' + (prefixo === 'c' ? 'pecas-selecionadas' : 'e-pecas-selecionadas') + ' > div');
+  linhas.forEach(linha => {
+    const sel = linha.querySelector('select');
+    const qtdEl = linha.querySelector('input[type=number]');
+    const obsEl = linha.querySelector('input[type=text]');
+    if (sel && qtdEl) {
+      contratoFake.pecas.push({
+        nome: sel.options[sel.selectedIndex].text.split(' — ')[0],
+        qtd: qtdEl.value,
+        observacao: obsEl ? obsEl.value : ''
+      });
+    }
+  });
+
+  const fichaFake = {
+    nomeNoiva: nomeNoiva,
+    nomeNoivo: nomeNoivo,
+    instagram: document.getElementById(prefixo + '-f-insta').value,
+    cerimonialista: document.getElementById(prefixo + '-f-cerimonial').value,
+    quemIndicou: document.getElementById(prefixo + '-f-indicacao').value,
+    iniciaisData: document.getElementById(prefixo + '-f-iniciais').value,
+    espelhoPresente: document.getElementById(prefixo + '-f-espelho').value,
+    obsPecas: {}
+  };
+  
+  contratoFake.pecas.forEach(p => { fichaFake.obsPecas[p.nome] = p.observacao; });
+
+  gerarImpressaoFicha(contratoFake, fichaFake);
+}
+  
 function gerarImpressaoFicha(c, f) {
   const w = window.open('', '_blank');
   const dataCas = c.casamento ? c.casamento.split('-').reverse().join('/') : '';
