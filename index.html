@@ -3022,6 +3022,7 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
   const mins    = d.tempo || getTotalProcessosMins() || 60;
   const salario = valorHora * (mins / 60);
   const custoFixo = custoFixoHora * (mins / 60);
+  // Aplica perda de resina: soma custo extra sobre materiais com "resina" no nome
   const perdaResina = (d.perdaResina ?? 5) / 100;
   const materiaisComPerda = d.materiais.map(m => {
     if ((m.nome || '').toLowerCase().includes('resina') && perdaResina > 0) {
@@ -3033,6 +3034,7 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
   const fmtR = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2});
 
   let matRows = d.materiais.map((m, i) => {
+    // Material vinculado a um cadastrado: mostra qtd editável + custo calculado
     if (m.matGlobalId) {
       const matG = matGlobais.find(x => x.id === m.matGlobalId);
       if (matG) {
@@ -3049,10 +3051,11 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
             <span class="prec-mat-unit">${unidade}</span>
           </div>
           <span class="prec-mat-custo-calc" id="prec-mat-custo-${p.id}-${i}">${m.valor > 0 ? fmtR(m.valor) : '—'}</span>
-          <button class="prec-mat-del" onclick="removerMatPrec(${p.id}, i)" title="Remover">×</button>
+          <button class="prec-mat-del" onclick="removerMatPrec(${p.id}, ${i})" title="Remover">×</button>
         </div>`;
       }
     }
+    // Material manual / fixo: só campo de R$
     return `
       <div class="prec-mat-row" id="prec-mat-${p.id}-${i}">
         <span class="prec-mat-nome">${m.nome}</span>
@@ -3063,6 +3066,8 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
         <button class="prec-mat-del" onclick="removerMatPrec(${p.id}, ${i})" title="Remover">×</button>
       </div>`;
   }).join('');
+
+  const lucroVal = r.precoBase > 0 ? ((r.precoBase - r.custoTotalReal) / r.precoBase * 100).toFixed(1) : '0.0';
 
   return `<div class="prec-peca-card${cardIdx % 2 === 1 ? ' par' : ''}" id="prec-card-${p.id}">
     <div class="prec-peca-header" style="display: flex; align-items: center; justify-content: space-between; padding: 0.8rem 1rem; background: rgba(184,134,42,0.05); border-bottom: 1px solid rgba(184,134,42,0.12);">
@@ -3099,7 +3104,7 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
       <label style="margin-left:0.4rem">Margem (%)</label>
       <input class="prec-lucro-input" type="number" min="0" max="99" step="1"
         value="${d.lucro}"
-        oninput="atualizarLucroPrec(${p.id}, this.value); simularLucro(${p.id}, document.querySelector('#prec-card-${p.id} .prec-simul-input').value)">
+        oninput="atualizarLucroPrec(${p.id}, this.value)">
       <label style="margin-left:0.4rem">Perda resina (%)</label>
       <input class="prec-lucro-input" type="number" min="0" max="50" step="1"
         value="${d.perdaResina ?? 5}"
@@ -3110,12 +3115,6 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
       <div class="prec-res-row"><span class="lbl">Salário (mão de obra)</span><span class="val">${fmtR(salario)}</span></div>
       <div class="prec-res-row"><span class="lbl">Custo fixo</span><span class="val">${fmtR(custoFixo)}</span></div>
       <div class="prec-res-row"><span class="lbl">Custo total real</span><span class="val" style="color:var(--dark)">${fmtR(r.custoTotalReal)}</span></div>
-      
-      <div class="prec-res-row" style="margin-top:0.4rem; padding-top:0.4rem; border-top:1px dashed rgba(184,134,42,0.15);">
-        <span class="lbl" style="color:var(--sage); font-weight:600;">Lucro (em R$)</span>
-        <span class="val" style="color:var(--sage); font-weight:600;">${fmtR(r.valorLucro)}</span>
-      </div>
-
       <div class="prec-res-total">
         <span class="lbl">Preço base de venda</span>
         <span class="val">${fmtR(r.precoBase)}</span>
