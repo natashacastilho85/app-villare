@@ -3177,42 +3177,37 @@ async function duplicarPecaPrec(pecaId) {
   const novoNome = p.nome + ' (cópia)';
   
   try {
-    // 1. Cria a peça no banco de dados
     const novaDB = await sbInsert('pecas', { nome: novoNome, valor: p.valor || 0 });
     const novaId = novaDB[0].id;
     
-    // 2. Adiciona na lista local
     pecas.push({ id: novaId, nome: novoNome, valor: p.valor || 0, desc: p.desc || '' });
-    
-    // 3. Copia os dados de precificação (materiais, tempo, etc) da peça antiga para a nova
     precDados[novaId] = JSON.parse(JSON.stringify(getPrecPeca(pecaId)));
     
-    // 4. Garante que a peça nova nasça com o cálculo de custo atualizado
     recalcularCard(novaId);
-    
     await salvarPrecLocal();
     renderCatalogo();
-    _renderPrecBody(); // Desenha a tela com a peça nova
+    _renderPrecBody();
 
-    // 5. MÁGICA: Rola a tela e força o cálculo da simulação
+    // COMANDO DE ROLAR A TELA (REFORÇADO)
     setTimeout(() => {
       const card = document.getElementById('prec-card-' + novaId);
       if (card) {
-        // Rola a tela até a peça nova
+        // Rola suavemente até o card novo
         card.scrollIntoView({ behavior: 'smooth', block: 'center' });
         
-        // Faz ela brilhar em dourado para você ver onde ela está
-        card.style.outline = '3px solid var(--gold)';
-        setTimeout(() => card.style.outline = 'none', 2000);
+        // Brilho dourado para você identificar a peça nova na hora
+        card.style.transition = 'all 0.5s';
+        card.style.boxShadow = '0 0 15px var(--gold)';
+        setTimeout(() => card.style.boxShadow = '', 2000);
 
-        // Pega os dados da peça e força a simulação a rodar com o valor que já veio nela
+        // Força o cálculo da simulação
         const d = getPrecPeca(novaId);
         const campoSimulacao = card.querySelector('.prec-simul-input');
         if (campoSimulacao && campoSimulacao.value) {
           simularLucro(novaId, campoSimulacao.value, d.custoTotalReal || 0);
         }
       }
-    }, 500);
+    }, 600); // Um pouquinho mais de tempo para o sistema "respirar" e rolar
 
   } catch(e) { 
     alert('Erro ao duplicar: ' + e.message); 
