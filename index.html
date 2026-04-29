@@ -450,18 +450,14 @@
 
     <!-- CONTRATOS -->
     <div class="screen" id="screen-contratos">
-      <div class="filter-row" id="filter-row">
-        <div class="filter-chip active" data-status="todos">Todos</div>
-        <div class="filter-chip" data-status="Reserva">Reserva</div>
-        <div class="filter-chip" data-status="Aguardando">Aguardando</div>
-        <div class="filter-chip" data-status="Produção">Produção</div>
-        <div class="filter-chip" data-status="Concluído">Concluído</div>
-        <div class="filter-chip" data-status="Enviado">Enviado</div>
-        <div class="filter-chip" data-status="Cancelado">Cancelado</div>
-        <div class="filter-chip" data-status="devedor">Devedor</div>
+      
+      <div style="margin-bottom: 12px;">
+        <input type="text" id="busca-contrato" placeholder="🔍 Buscar noiva por nome..." 
+               style="width: 100%; padding: 12px; border: 1px solid rgba(184,134,42,0.3); border-radius: 8px; font-family: 'Calibri', sans-serif; font-size: 0.9rem; outline: none; background: var(--input-bg, white); color: var(--dark);"
+               onkeyup="filtrarContratos()">
       </div>
-      <div id="contratos-list"></div>
-    </div>
+
+      <div class="filter-row" id="filter-row">
 
     <!-- CALENDÁRIO -->
     <div class="screen" id="screen-calendario">
@@ -3925,7 +3921,33 @@ async function ativarPushAposLogin() {
     await registrarPush(window._swReg);
   }
 }
+async function ativarPushAposLogin() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  if (!window._swReg) return;
+  const perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    await registrarPush(window._swReg);
+  }
+}
 
+// NOVA FUNÇÃO DE FILTRO AQUI:
+function filtrarContratos() {
+  const termo = document.getElementById('busca-contrato').value.toLowerCase();
+  const lista = document.getElementById('contratos-list'); 
+  const cards = lista.getElementsByClassName('contract-card');
+
+  Array.from(cards).forEach(card => {
+    const texto = card.textContent.toLowerCase();
+    card.style.display = texto.includes(termo) ? "" : "none";
+  });
+}
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    window._swReg = reg;
+  });
+}
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     const reg = await navigator.serviceWorker.register('/sw.js');
