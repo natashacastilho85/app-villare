@@ -1479,7 +1479,7 @@ async function saveContrato() {
       pagamentos: pagamentosIni, ficha_producao: ficha
     });
     closeDrawer('drawer-new');
-    await loadData();
+    window.location.reload();
   } catch(e) { alert('Erro ao salvar: ' + e.message); }
 }
 
