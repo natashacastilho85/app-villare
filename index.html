@@ -3765,6 +3765,42 @@ function imprimirFichaPeloForm(prefixo) {
 
   gerarImpressaoFicha(contratoFake, fichaFake);
 }
+
+function imprimirFichaPeloForm(prefixo) {
+  const contratoFake = {
+    nome: document.getElementById(prefixo + '-nome').value || 'Nova Noiva',
+    casamento: document.getElementById(prefixo + '-casamento').value,
+    cidade: document.getElementById(prefixo + '-cidade').value,
+    estado: document.getElementById(prefixo + '-estado').value,
+    valorBruto: 0, 
+    pecas: []
+  };
+
+  const linhas = document.querySelectorAll('#' + (prefixo === 'c' ? 'pecas-selecionadas' : 'e-pecas-selecionadas') + ' > div');
+  linhas.forEach(linha => {
+    const sel = linha.querySelector('select');
+    const qtdEl = linha.querySelector('input[type=number]');
+    if (sel && qtdEl) {
+      contratoFake.pecas.push({
+        nome: sel.options[sel.selectedIndex].text.split(' — ')[0],
+        qtd: qtdEl.value
+      });
+    }
+  });
+
+  const fichaFake = {
+    nomeNoiva: document.getElementById(prefixo + '-f-noiva').value,
+    nomeNoivo: document.getElementById(prefixo + '-f-noivo').value,
+    instagram: document.getElementById(prefixo + '-f-insta').value,
+    cerimonialista: document.getElementById(prefixo + '-f-cerimonial').value,
+    quemIndicou: document.getElementById(prefixo + '-f-indicacao').value,
+    iniciaisData: document.getElementById(prefixo + '-f-iniciais').value,
+    espelhoPresente: document.getElementById(prefixo + '-f-espelho').value,
+    obsGeral: document.getElementById(prefixo + '-f-obs-geral').value
+  };
+
+  gerarImpressaoFicha(contratoFake, fichaFake);
+}
   
 function gerarImpressaoFicha(c, f) {
   const w = window.open('', '_blank');
@@ -3822,6 +3858,10 @@ function gerarImpressaoFicha(c, f) {
 
       <h3 style="color: #4A3320; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-top: 30px;">Peças Escolhidas</h3>
       ${pecasHtml}
+      <div style="margin-top: 20px; padding: 15px; background: #faf9f7; border: 1px solid #e8e3dc; border-radius: 5px;">
+        <strong style="color: #4A3320; font-size: 14px;">OBSERVAÇÕES DA PRODUÇÃO:</strong><br>
+        <p style="white-space: pre-wrap; margin-top: 10px; color: #222;">${f.obsGeral || 'Nenhuma observação informada.'}</p>
+      </div>
 <div style="margin-top: 20px; padding: 15px; background: #faf9f7; border: 1px solid #e8e3dc; border-radius: 5px;">
         <strong style="color: #4A3320; font-size: 14px;">OBSERVAÇÕES DA PRODUÇÃO:</strong><br>
         <p style="white-space: pre-wrap; margin-top: 10px; color: #222;">${f.obsGeral || 'Nenhuma observação informada.'}</p>
