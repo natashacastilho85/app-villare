@@ -2425,9 +2425,11 @@ async function saveEditContrato() {
 
   try {
     await sbUpdate('contratos', contratoEditandoId, dados);
-    fecharEditContrato();
-    await loadData();
-  } catch(e) { alert('Erro ao atualizar: ' + e.message); }
+    fecharEditContrato(); // Isso faz a gaveta fechar
+    window.location.reload(); // Isso atualiza a lista com os dados novos
+  } catch(e) { 
+    alert('Erro ao atualizar: ' + e.message); 
+  }
 }
 
 async function excluirContrato() {
