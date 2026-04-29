@@ -3064,23 +3064,26 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
   const lucroVal = r.precoBase > 0 ? ((r.precoBase - r.custoTotalReal) / r.precoBase * 100).toFixed(1) : '0.0';
 
   return `<div class="prec-peca-card${cardIdx % 2 === 1 ? ' par' : ''}" id="prec-card-${p.id}">
-    <div class="prec-peca-header">
-      <span class="prec-peca-nome" onclick="openPeca(${p.id})" style="cursor:pointer" title="Editar nome">${p.nome} ✏️</span>
+    <div class="prec-peca-header" style="display: flex; align-items: center; justify-content: space-between; padding: 0.8rem 1rem; background: rgba(184,134,42,0.05); border-bottom: 1px solid rgba(184,134,42,0.12);">
+      <span class="prec-peca-nome" onclick="openPeca(${p.id})" style="cursor:pointer; font-family:'Calibri',serif; font-size:1.1rem; color:var(--dark);" title="Editar nome">
+        ${p.nome} ✏️
+      </span>
       
-      <div style="display:flex; gap:0.8rem; margin-left:auto; align-items:center;">
+      <div style="display:flex; gap:1rem; align-items:center;">
         <button onclick="duplicarPecaPrec(${p.id})" title="Duplicar peça" 
-                style="background:none; border:none; color:var(--muted); font-size:1.1rem; cursor:pointer; padding:0; opacity:0.8;">
-                ⧉
+                style="background:none; border:none; color:var(--muted); font-size:1.2rem; cursor:pointer; padding:0; line-height:1;">
+                copy;
         </button>
+        
         <button onclick="excluirPecaPrec(${p.id})" title="Excluir peça" 
-                style="background:none; border:none; color:var(--muted); font-size:1.1rem; cursor:pointer; padding:0; opacity:0.8;">
+                style="background:none; border:none; color:var(--muted); font-size:1.2rem; cursor:pointer; padding:0; line-height:1;">
                 🗑️
         </button>
         
-        <label style="display:flex; align-items:center; gap:0.3rem; font-size:0.65rem; color:var(--muted); cursor:pointer;">
+        <label style="display:flex; align-items:center; gap:0.3rem; font-size:0.65rem; color:var(--muted); cursor:pointer; border-left: 1px solid rgba(184,134,42,0.2); padding-left: 0.8rem; margin-left: 0.2rem;">
           <input type="checkbox" ${d.exibirCatalogo !== false ? 'checked' : ''}
             onchange="toggleExibirCatalogo(${p.id}, this.checked)"
-            style="accent-color:var(--brown); width:13px; height:13px; cursor:pointer;">
+            style="accent-color:var(--gold); width:13px; height:13px; cursor:pointer;">
           Catálogo
         </label>
       </div>
