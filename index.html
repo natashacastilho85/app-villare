@@ -3131,18 +3131,22 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
   const matG = matGlobais.find(x => x.id === m.matGlobalId);
   if (!matG) return;
   const qtd = parseFloat(val) || 0;
-  // Garante números mesmo se vier do localStorage como string
   const qtdTotal = parseFloat(matG.qtdTotal) || 0;
   const valorPago = parseFloat(matG.valorPago) || 0;
   m.qtdUsada = qtd;
-  // custo proporcional: (qtd / qtdTotal) * valorPago
   const custo = qtdTotal > 0 ? (qtd / qtdTotal) * valorPago : 0;
   m.valor = parseFloat(custo.toFixed(2));
   m.nome = matG.nome;
-  // Atualiza a célula de custo na linha
   const elCusto = document.getElementById('prec-mat-custo-' + pecaId + '-' + idx);
   if (elCusto) elCusto.textContent = m.valor > 0 ? 'R$ ' + m.valor.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
+  
   recalcularCard(pecaId);
+  
+  const valorSimulado = document.querySelector(`#prec-card-${pecaId} .prec-simul-input`).value;
+  if (valorSimulado) {
+    simularLucro(pecaId, valorSimulado, d.custoTotalReal || 0);
+  }
+  
   renderCatalogo();
 }
 
@@ -3185,7 +3189,14 @@ async function duplicarPecaPrec(pecaId) {
 function atualizarPerdaResina(pecaId, val) {
   const d = getPrecPeca(pecaId);
   d.perdaResina = Math.max(0, parseFloat(val) || 0);
+  
   recalcularCard(pecaId);
+  
+  const valorSimulado = document.querySelector(`#prec-card-${pecaId} .prec-simul-input`).value;
+  if (valorSimulado) {
+    simularLucro(pecaId, valorSimulado, d.custoTotalReal || 0);
+  }
+  
   salvarPrecLocal();
   renderCatalogo();
 }
