@@ -3108,8 +3108,8 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
     <div class="prec-simul">
       <label>Simular: se vender por R$</label>
       <div class="prec-simul-row">
-        <input class="prec-simul-input" type="number" step="1" placeholder="ex: 1200" oninput="simularLucro(${p.id}, this.value, ${r.custoTotalReal.toFixed(2)})">
-        oninput="simularLucro(${p.id}, this.value, ${r.custoTotalReal.toFixed(2)})"
+        <input class="prec-simul-input" type="number" step="1" placeholder="ex: 1200"
+        oninput="simularLucro(${p.id}, this.value, ${r.custoTotalReal.toFixed(2)})">
         <span class="prec-simul-result" id="prec-simul-res-${p.id}">← digite o valor</span>
       </div>
     </div>
