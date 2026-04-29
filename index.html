@@ -580,7 +580,6 @@
   <button class="fab" id="fab" onclick="openFab()">＋</button>
 </div>
 
-<!-- DRAWER NOVO CONTRATO -->
 <div class="drawer-overlay" id="drawer-new" onclick="closeDrawer('drawer-new')">
   <div class="drawer" onclick="event.stopPropagation()">
     <div class="drawer-handle"></div>
@@ -595,37 +594,7 @@
       <div class="field-group"><label class="field-label">Cidade</label><input class="field-input" id="c-cidade" type="text" placeholder="Cidade"></div>
       <div class="field-group"><label class="field-label">Estado</label><input class="field-input" id="c-estado" type="text" placeholder="SP" maxlength="2"></div>
     </div>
-
-    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(184,134,42,0.2);">
-      <div style="font-family:'Calibri',serif; font-size: 1.1rem; color: var(--brown); margin-bottom: 1rem;">Dados da Ficha de Produção</div>
-      
-      <div class="field-group"><label class="field-label">Nome da Noiva</label><input type="text" id="c-f-noiva" class="field-input"></div>
-      <div class="field-group"><label class="field-label">Nome do Noivo</label><input type="text" id="c-f-noivo" class="field-input"></div>
-      <div class="field-group"><label class="field-label">Instagram</label><input type="text" id="c-f-insta" class="field-input"></div>
-      
-      <div style="display:flex; gap:0.5rem">
-        <div class="field-group" style="flex:1"><label class="field-label">Cerimonialista</label><input type="text" id="c-f-cerimonial" class="field-input"></div>
-        <div class="field-group" style="flex:1"><label class="field-label">Quem indicou?</label><input type="text" id="c-f-indicacao" class="field-input"></div>
-      </div>
-
-      <div style="display:flex; gap:0.5rem">
-        <div class="field-group" style="flex:1">
-          <label class="field-label">Iniciais/Data?</label>
-          <select id="c-f-iniciais" class="field-input"><option>Não</option><option>Sim</option></select>
-        </div>
-        <div class="field-group" style="flex:1">
-          <label class="field-label">Espelho?</label>
-          <select id="c-f-espelho" class="field-input"><option>Não</option><option>Sim</option></select>
-        </div>
-      </div>
-
-      <button type="button" class="btn-primary" style="background:rgba(107,143,113,0.1); color:var(--sage); border:1px solid rgba(107,143,113,0.3); margin-top: 0.5rem; margin-bottom: 1.5rem;" 
-              <div class="field-group" style="margin-top: 1rem;">
-        <label class="field-label">Observações Gerais da Produção</label>
-        <textarea id="c-f-obs-geral" class="field-input" rows="3" placeholder="Flores, cores, detalhes do fundo..."></textarea>
-      </div>
-    </div>
-        <div class="field-group">
+    <div class="field-group">
       <label class="field-label">Recebimento do buquê</label>
       <select class="field-input" id="c-envio">
         <option>Correios</option>
@@ -665,13 +634,11 @@
       <label class="field-label">Desconto (R$)</label>
       <input class="field-input" id="c-desconto" type="number" placeholder="0,00" step="0.01" min="0">
     </div>
-    <!-- Reserva: campo único de entrada -->
     <div class="field-group" id="grp-pago-reserva" style="display:none">
       <label class="field-label">Entrada já recebida (R$)</label>
       <input class="field-input" id="c-pago" type="number" placeholder="Mín. R$ 300,00" step="0.01" min="0">
       <div class="field-hint visible" style="font-size:0.65rem;color:var(--muted);margin-top:0.3rem">O restante fica em aberto. Você poderá registrar mais pagamentos depois, no detalhe do contrato.</div>
     </div>
-    <!-- Misto: dois campos (Pix + Cartão) -->
     <div id="grp-pago-misto" style="display:none">
       <div class="field-row">
         <div class="field-group">
@@ -696,8 +663,38 @@
         </div>
       </div>
     </div>
-  <button type="button" class="btn-primary" style="background:rgba(107,143,113,0.1); color:var(--sage); border:1px solid rgba(107,143,113,0.3); margin-bottom: 0.5rem;" onclick="imprimirFichaPeloForm('c')">🖨️ Imprimir Ficha Agora</button>  
-  <button class="btn-primary" onclick="saveContrato()">Salvar contrato</button>
+
+    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(184,134,42,0.2);">
+      <div style="font-family:'Calibri',serif; font-size: 1.1rem; color: var(--brown); margin-bottom: 1rem;">Dados da Ficha de Produção</div>
+      
+      <div class="field-group"><label class="field-label">Nome da Noiva</label><input type="text" id="c-f-noiva" class="field-input"></div>
+      <div class="field-group"><label class="field-label">Nome do Noivo</label><input type="text" id="c-f-noivo" class="field-input"></div>
+      <div class="field-group"><label class="field-label">Instagram</label><input type="text" id="c-f-insta" class="field-input"></div>
+      
+      <div style="display:flex; gap:0.5rem">
+        <div class="field-group" style="flex:1"><label class="field-label">Cerimonialista</label><input type="text" id="c-f-cerimonial" class="field-input"></div>
+        <div class="field-group" style="flex:1"><label class="field-label">Quem indicou?</label><input type="text" id="c-f-indicacao" class="field-input"></div>
+      </div>
+
+      <div style="display:flex; gap:0.5rem">
+        <div class="field-group" style="flex:1">
+          <label class="field-label">Iniciais/Data?</label>
+          <select id="c-f-iniciais" class="field-input"><option>Não</option><option>Sim</option></select>
+        </div>
+        <div class="field-group" style="flex:1">
+          <label class="field-label">Espelho?</label>
+          <select id="c-f-espelho" class="field-input"><option>Não</option><option>Sim</option></select>
+        </div>
+      </div>
+      
+      <div class="field-group" style="margin-top: 1rem;">
+        <label class="field-label">Observações Gerais da Produção</label>
+        <textarea id="c-f-obs-geral" class="field-input" rows="3" placeholder="Flores, cores, detalhes do fundo..."></textarea>
+      </div>
+    </div>
+
+    <button type="button" class="btn-primary" style="background:rgba(107,143,113,0.1); color:var(--sage); border:1px solid rgba(107,143,113,0.3); margin-top: 0.5rem; margin-bottom: 1.5rem;" onclick="imprimirFichaPeloForm('c')">🖨️ Imprimir Ficha Agora</button>
+    <button class="btn-primary" onclick="saveContrato()">Salvar contrato</button>
     <button class="btn-secondary" onclick="closeDrawer('drawer-new')">Cancelar</button>
   </div>
 </div>
