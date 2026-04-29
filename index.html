@@ -4065,7 +4065,192 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// --- INÍCIO DA CORREÇÃO BLINDADA (MARKUP E LUCRO) ---
 
+window.calcPrec = function(materiais, lucro, salario, custoFixoHora) {
+  const custoMat = materiais.reduce((s, m) => s + (parseFloat(m.valor) || 0), 0);
+  const custoTotalReal = custoMat + salario + custoFixoHora;
+  
+  const margemPercentual = (parseFloat(lucro) || 0) / 100;
+  const divisor = 1 - margemPercentual;
+  const precoBase = divisor > 0 ? custoTotalReal / divisor : custoTotalReal;
+  
+  const valorLucro = precoBase - custoTotalReal;
+  const tarifaCartao = typeof getTarifaCartao === 'function' ? getTarifaCartao() : 0.0701; 
+  const precoCartao = precoBase / (1 - tarifaCartao);
+
+  function paraFinal7(valor) {
+    if (!valor || valor <= 0) return 0;
+    return Math.floor(valor / 10) * 10 + 7;
+  }
+
+  return { custoMat, custoTotalReal, valorLucro, precoBase: paraFinal7(precoBase), precoCartao: paraFinal7(precoCartao) };
+};
+
+window.simularLucro = function(pecaId, valorVenda) {
+  const el = document.getElementById('prec-simul-res-' + pecaId);
+  if (!el) return;
+  const venda = parseFloat(valorVenda);
+  if (!venda || venda <= 0) { el.innerHTML = '← digite o valor'; return; }
+
+  const d = getPrecPeca(pecaId);
+  const mins = d.tempo || (typeof getTotalProcessosMins === 'function' ? getTotalProcessosMins() : 60) || 60;
+  const salario = (typeof getValorHora === 'function' ? getValorHora() : 0) * (mins / 60);
+  const custoFixo = (typeof getCustoFixoPorHora === 'function' ? getCustoFixoPorHora() : 0) * (mins / 60);
+  
+  const perdaResina = (d.perdaResina !== undefined ? d.perdaResina : 5) / 100;
+  const materiaisComPerda = d.materiais.map(m => {
+    if ((m.nome || '').toLowerCase().includes('resina') && perdaResina > 0) {
+      return { ...m, valor: (parseFloat(m.valor) || 0) * (1 + perdaResina) };
+    }
+    return m;
+  });
+  
+  const custoTotalReal = materiaisComPerda.reduce((s, m) => s + (parseFloat(m.valor) || 0), 0) + salario + custoFixo;
+  const tarifaCartao = typeof getTarifaCartao === 'function' ? getTarifaCartao() : 0.0701;
+  const vendaLiquida = venda * (1 - tarifaCartao);
+  const margemCalculada = ((vendaLiquida - custoTotalReal) / vendaLiquida) * 100;
+  const lucroEmReais = vendaLiquida - custoTotalReal;
+
+  const fmt = v => 'R$ ' + Math.abs(v).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const cor = margemCalculada >= 0 ? 'var(--sage)' : 'var(--bordeaux)';
+  el.innerHTML = '<span style="color:' + cor + '"><strong>' + margemCalculada.toFixed(1) + '% de margem</strong> · lucro ' + fmt(lucroEmReais) + '</span>';
+};
+
+window.recalcularCard = function(pecaId) {
+  const d = getPrecPeca(pecaId);
+  const mins = d.tempo || (typeof getTotalProcessosMins === 'function' ? getTotalProcessosMins() : 60) || 60;
+  const salario = (typeof getValorHora === 'function' ? getValorHora() : 0) * (mins / 60);
+  const custoFixo = (typeof getCustoFixoPorHora === 'function' ? getCustoFixoPorHora() : 0) * (mins / 60);
+  
+  const perdaResina = (d.perdaResina !== undefined ? d.perdaResina : 5) / 100;
+  const materiaisComPerda = d.materiais.map(m => {
+    if ((m.nome || '').toLowerCase().includes('resina') && perdaResina > 0) {
+      return { ...m, valor: (parseFloat(m.valor) || 0) * (1 + perdaResina) };
+    }
+    return m;
+  });
+  
+  const r = window.calcPrec(materiaisComPerda, d.lucro, salario, custoFixo);
+  const fmtR = v => 'R$ ' + (parseFloat(v)||0).toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2});
+  
+  const card = document.getElementById('prec-card-' + pecaId);
+  if (!card) return;
+  
+  const rows = card.querySelectorAll('.prec-res-row .val');
+  if (rows[0]) rows[0].textContent = fmtR(r.custoMat);
+  if (rows[1]) rows[1].textContent = fmtR(salario);
+  if (rows[2]) rows[2].textContent = fmtR(custoFixo);
+  if (rows[3]) rows[3].textContent = fmtR(r.custoTotalReal);
+  if (rows[4]) rows[4].textContent = fmtR(r.valorLucro); // Linha do Lucro Real
+  
+  const totais = card.querySelectorAll('.prec-res-total .val');
+  if (totais[0]) totais[0].textContent = fmtR(r.precoBase);
+  if (totais[1]) totais[1].textContent = fmtR(r.precoCartao);
+  
+  if (typeof atualizarTabelaResumo === 'function') atualizarTabelaResumo();
+};
+
+window.renderPrecCard = function(p, d, valorHora, custoFixoHora, cardIdx) {
+  const mins = d.tempo || (typeof getTotalProcessosMins === 'function' ? getTotalProcessosMins() : 60) || 60;
+  const salario = valorHora * (mins / 60);
+  const custoFixo = custoFixoHora * (mins / 60);
+  
+  const perdaResina = (d.perdaResina !== undefined ? d.perdaResina : 5) / 100;
+  const materiaisComPerda = d.materiais.map(m => {
+    if ((m.nome || '').toLowerCase().includes('resina') && perdaResina > 0) {
+      return { ...m, valor: (parseFloat(m.valor) || 0) * (1 + perdaResina) };
+    }
+    return m;
+  });
+  
+  const r = window.calcPrec(materiaisComPerda, d.lucro, salario, custoFixo);
+  const fmtR = v => 'R$ ' + (parseFloat(v)||0).toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2});
+
+  let matRows = d.materiais.map((m, i) => {
+    if (m.matGlobalId) {
+      const matG = typeof matGlobais !== 'undefined' ? matGlobais.find(x => x.id === m.matGlobalId) : null;
+      if (matG) {
+        const qtdAtual = m.qtdUsada || 0;
+        return '<div class="prec-mat-row prec-mat-row-qtd" id="prec-mat-' + p.id + '-' + i + '">' +
+          '<span class="prec-mat-nome">' + matG.nome + '</span>' +
+          '<div class="prec-mat-qtd-wrap">' +
+            '<input class="prec-mat-qtd-input" type="number" step="0.01" min="0" value="' + (qtdAtual > 0 ? qtdAtual : '') + '" placeholder="0" oninput="atualizarQtdMatPrec(' + p.id + ', ' + i + ', this.value)">' +
+            '<span class="prec-mat-unit">' + matG.unidade + '</span>' +
+          '</div>' +
+          '<span class="prec-mat-custo-calc" id="prec-mat-custo-' + p.id + '-' + i + '">' + (m.valor > 0 ? fmtR(m.valor) : '—') + '</span>' +
+          '<button class="prec-mat-del" onclick="removerMatPrec(' + p.id + ', ' + i + ')" title="Remover">×</button>' +
+        '</div>';
+      }
+    }
+    return '<div class="prec-mat-row" id="prec-mat-' + p.id + '-' + i + '">' +
+      '<span class="prec-mat-nome">' + m.nome + '</span>' +
+      '<input class="prec-mat-input" type="number" step="0.01" min="0" value="' + (m.valor > 0 ? m.valor.toFixed(2) : '') + '" placeholder="R$" oninput="atualizarMatPrec(' + p.id + ', ' + i + ', this.value)">' +
+      '<button class="prec-mat-del" onclick="removerMatPrec(' + p.id + ', ' + i + ')" title="Remover">×</button>' +
+    '</div>';
+  }).join('');
+
+  let procHtml = '';
+  if (typeof renderProcessosPeca === 'function') {
+     procHtml = renderProcessosPeca(p.id, d);
+  }
+
+  return '<div class="prec-peca-card' + (cardIdx % 2 === 1 ? ' par' : '') + '" id="prec-card-' + p.id + '">' +
+    '<div class="prec-peca-header" style="display: flex; align-items: center; justify-content: space-between; padding: 0.8rem 1rem; background: rgba(184,134,42,0.05); border-bottom: 1px solid rgba(184,134,42,0.12);">' +
+      '<span class="prec-peca-nome" onclick="openPeca(' + p.id + ')" style="cursor:pointer; font-family:\'Calibri\',serif; font-size:1.1rem; color:var(--dark);" title="Editar nome">' + p.nome + ' ✏️</span>' +
+      '<div style="display:flex; gap:1rem; align-items:center;">' +
+        '<button onclick="duplicarPecaPrec(' + p.id + ')" title="Duplicar peça" style="background:none; border:none; font-size:1.1rem; cursor:pointer; padding:0;">📋</button>' +
+        '<button onclick="excluirPecaPrec(' + p.id + ')" title="Excluir peça" style="background:none; border:none; font-size:1.1rem; cursor:pointer; padding:0;">🗑️</button>' +
+        '<label style="display:flex; align-items:center; gap:0.3rem; font-size:0.65rem; color:var(--muted); cursor:pointer; border-left: 1px solid rgba(184,134,42,0.2); padding-left: 0.8rem; margin-left: 0.2rem;">' +
+          '<input type="checkbox" ' + (d.exibirCatalogo !== false ? 'checked' : '') + ' onchange="toggleExibirCatalogo(' + p.id + ', this.checked)" style="accent-color:var(--gold); width:13px; height:13px; cursor:pointer;"> Catálogo' +
+        '</label>' +
+      '</div>' +
+    '</div>' +
+    matRows +
+    '<button class="prec-add-btn" onclick="adicionarMatPrec(' + p.id + ')">＋ Adicionar material</button>' +
+    '<div class="prec-lucro-row" style="flex-wrap:wrap;gap:0.4rem 0.8rem">' +
+      '<label>Tempo (min)</label>' +
+      '<input class="prec-lucro-input" type="number" min="1" step="1" value="' + mins + '" id="prec-tempo-' + p.id + '" oninput="atualizarTempoPrec(' + p.id + ', this.value)">' +
+      '<label style="margin-left:0.4rem">Margem (%)</label>' +
+      '<input class="prec-lucro-input" type="number" min="0" max="99" step="1" value="' + d.lucro + '" oninput="atualizarLucroPrec(' + p.id + ', this.value); window.simularLucro(' + p.id + ', document.querySelector(\'#prec-card-\' + ' + p.id + ' + \' .prec-simul-input\').value)">' +
+      '<label style="margin-left:0.4rem">Perda resina (%)</label>' +
+      '<input class="prec-lucro-input" type="number" min="0" max="50" step="1" value="' + (d.perdaResina !== undefined ? d.perdaResina : 5) + '" oninput="atualizarPerdaResina(' + p.id + ', this.value)">' +
+    '</div>' +
+    procHtml + 
+    '<div class="prec-resultado">' +
+      '<div class="prec-res-row"><span class="lbl">Custo materiais</span><span class="val">' + fmtR(r.custoMat) + '</span></div>' +
+      '<div class="prec-res-row"><span class="lbl">Salário (mão de obra)</span><span class="val">' + fmtR(salario) + '</span></div>' +
+      '<div class="prec-res-row"><span class="lbl">Custo fixo</span><span class="val">' + fmtR(custoFixo) + '</span></div>' +
+      '<div class="prec-res-row"><span class="lbl">Custo total real</span><span class="val" style="color:var(--dark)">' + fmtR(r.custoTotalReal) + '</span></div>' +
+      '<div class="prec-res-row" style="margin-top:0.4rem; padding-top:0.4rem; border-top:1px dashed rgba(184,134,42,0.15);">' +
+        '<span class="lbl" style="color:var(--sage); font-weight:600;">Lucro Real (em R$)</span>' +
+        '<span class="val" style="color:var(--sage); font-weight:600;">' + fmtR(r.valorLucro) + '</span>' +
+      '</div>' +
+      '<div class="prec-res-total">' +
+        '<span class="lbl">Preço base de venda</span>' +
+        '<span class="val">' + fmtR(r.precoBase) + '</span>' +
+      '</div>' +
+      '<div class="prec-res-total" style="margin-top:0.15rem">' +
+        '<span class="lbl" style="color:var(--brown)">Com tarifa cartão</span>' +
+        '<span class="val" style="font-size:1.3rem;color:var(--brown)">' + fmtR(r.precoCartao) + '</span>' +
+      '</div>' +
+    '</div>' +
+    '<div class="prec-simul">' +
+      '<label>Simular: se vender por R$</label>' +
+      '<div class="prec-simul-row">' +
+        '<input class="prec-simul-input" type="number" step="1" placeholder="ex: 1200" oninput="window.simularLucro(' + p.id + ', this.value)">' +
+        '<span class="prec-simul-result" id="prec-simul-res-' + p.id + '">← digite o valor</span>' +
+      '</div>' +
+    '</div>' +
+    '<div style="text-align: center; margin-top: 1rem; padding-top: 0.6rem; border-top: 1px dashed rgba(184,134,42,0.2);">' +
+      '<button onclick="document.querySelector(\'#drawer-prec .drawer\').scrollTo({top: 0, behavior: \'smooth\'})" style="background: none; border: none; color: var(--brown); font-size: 0.72rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">' +
+        '↑ Voltar ao topo' +
+      '</button>' +
+    '</div>' +
+  '</div>';
+};
+
+// --- FIM DA CORREÇÃO BLINDADA ---
 </script>
 </body>
 </html>
