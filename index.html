@@ -3209,25 +3209,17 @@ async function duplicarPecaPrec(pecaId) {
     
     recalcularCard(novaId);
     await salvarPrecLocal();
-    _renderPrecBody(); // Aqui ele já reordena de A a Z
+    _renderPrecBody();
 
-    // ROLAR A TELA ATÉ A PEÇA NOVA
     setTimeout(() => {
       const card = document.getElementById('prec-card-' + novaId);
       if (card) {
-        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // block: 'start' faz o topo do card alinhar com o topo da tela
+        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
         
-        // Brilho dourado de destaque
         card.style.transition = 'all 0.5s';
         card.style.boxShadow = '0 0 20px rgba(184, 134, 42, 0.5)';
         setTimeout(() => card.style.boxShadow = '', 2000);
-
-        // Força o simulador
-        const d = getPrecPeca(novaId);
-        const campoSimulacao = card.querySelector('.prec-simul-input');
-        if (campoSimulacao && campoSimulacao.value) {
-          simularLucro(novaId, campoSimulacao.value, d.custoTotalReal || 0);
-        }
       }
     }, 500);
 
