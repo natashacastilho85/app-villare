@@ -405,6 +405,35 @@
   display: block; /* Abre no celular ao clicar */
 }
 
+.processos-toggle {
+  display: flex !important;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.8rem 1rem;
+  background: rgba(107, 143, 113, 0.05); /* Um tom verde/sage bem leve */
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--sage);
+  text-transform: uppercase;
+  border-top: 1px solid rgba(107, 143, 113, 0.1);
+}
+
+.processos-content {
+  display: none;
+  padding: 0.5rem 0;
+}
+
+.processos-content.aberto {
+  display: block !important;
+}
+
+/* Trava PC */
+@media (min-width: 1024px) {
+  .processos-toggle { display: none !important; }
+  .processos-content { display: block !important; }
+}
+  
 /* --- TRAVA DE SEGURANÇA PARA O PC (NÃO MUDA NADA) --- */
 @media (min-width: 1024px) {
   .materiais-toggle {
@@ -4704,6 +4733,57 @@ window.salvarPrecLocal = async function() {
 
 window.atualizarTempoPrec = function(id, v) { getPrecPeca(id).tempo = parseInt(v)||60; window.recalcularCard(id); window.salvarPrecLocal(); };
 window.atualizarLucroPrec = function(id, v) { getPrecPeca(id).lucro = parseFloat(v)||0; window.recalcularCard(id); window.salvarPrecLocal(); };
+
+  // --- BLOCO DEFINITIVO: MATERIAIS + PROCESSOS (SANFONA) ---
+
+// 1. Função que abre e fecha as seções
+window.toggleSecaoVisivel = function(id, setaId) {
+  const conteudo = document.getElementById(id);
+  const seta = document.getElementById(setaId);
+  if (conteudo.classList.contains('aberto')) {
+    conteudo.classList.remove('aberto');
+    seta.textContent = '▼';
+  } else {
+    conteudo.classList.add('aberto');
+    seta.textContent = '▲';
+  }
+};
+
+// 2. O "Injetor" de sanfonas para Celular
+const renderOriginalParaCelular = window.renderPrecCard;
+window.renderPrecCard = function(p, d, valorHora, custoFixoHora, cardIdx) {
+  let html = renderOriginalParaCelular(p, d, valorHora, custoFixoHora, cardIdx);
+  
+  // Se for computador, não faz nada, retorna o original
+  if (window.innerWidth >= 1024) return html;
+
+  // Injeta Sanfona de MATERIAIS
+  html = html.replace(
+    '<div class="prec-mat-row',
+    `<div class="materiais-toggle" onclick="toggleSecaoVisivel('list-mat-${p.id}', 'seta-mat-${p.id}')">
+       <span>Materiais Utilizados</span><span id="seta-mat-${p.id}">▼</span>
+     </div>
+     <div class="materiais-content" id="list-mat-${p.id}"><div class="prec-mat-row`
+  ).replace(
+    '<button class="prec-add-btn"',
+    `</div><button class="prec-add-btn"`
+  );
+
+  // Injeta Sanfona de PROCESSOS
+  html = html.replace(
+    '<div class="prec-processos-wrap">',
+    `<div class="processos-toggle" onclick="toggleSecaoVisivel('list-proc-${p.id}', 'seta-proc-${p.id}')">
+       <span>Processos de Produção</span><span id="seta-proc-${p.id}">▼</span>
+     </div>
+     <div class="processos-content" id="list-proc-${p.id}"><div class="prec-processos-wrap">`
+  ).replace(
+    '</div><div class="prec-lucro-row">',
+    `</div></div><div class="prec-lucro-row">`
+  );
+
+  return html;
+};
+
 </script>
 </body>
 </html>
