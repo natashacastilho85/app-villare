@@ -381,29 +381,7 @@
   .ctab-td-total { font-family:'Calibri',serif; font-size:1.05rem; color:var(--brown); padding:0.65rem 0.9rem; text-align:center; white-space:nowrap; }
   .ctab-td-total-label { font-size:0.6rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); padding:0.65rem 0.8rem; position:sticky; left:0; background:white; white-space:nowrap; }
 
-/* Ajuste para telas grandes (Computadores) */
-@media (min-width: 1024px) {
-  #prec-body {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* Cria 3 colunas iguais */
-    gap: 1.5rem; /* Espaço entre os cards */
-    align-items: start;
-    padding: 1rem;
-  }
-
-  .prec-peca-card {
-    margin-bottom: 0 !important; /* Remove a margem de baixo já que o grid cuida do espaço */
-    height: 100%; /* Faz todos os cards da mesma linha terem a mesma altura visual */
-  }
-  
-  /* Ajusta o resumo para não ficar esticado demais no topo */
-  #prec-resumo-container {
-    grid-column: 1 / -1; /* Faz a tabela de resumo ocupar as 3 colunas (largura total) */
-    margin-bottom: 1rem;
-  }
-}
-
-/* Organização para Computador (3 cards e tabela compacta) */
+/* --- ESTILOS DE TELA GRANDE (PC) --- */
 @media (min-width: 1024px) {
   #prec-body {
     display: grid;
@@ -413,44 +391,55 @@
     padding: 1rem;
   }
 
+  .prec-peca-card {
+    margin-bottom: 0 !important;
+    height: 100%;
+  }
+
+  /* Container da tabela */
   #prec-resumo-container {
     grid-column: 1 / -1;
     display: flex;
     justify-content: flex-start;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
   }
 
+  /* Tabela compacta com respiro */
   #prec-resumo-container table {
     width: auto !important; 
     border-collapse: collapse;
     background: rgba(184, 134, 42, 0.03);
     border-radius: 8px;
+    overflow: hidden;
   }
 
   #prec-resumo-container tr {
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
-    padding: 0.5rem 1.2rem;
+    padding: 0.6rem 1.5rem;
     border-bottom: 1px solid rgba(184, 134, 42, 0.05);
     transition: background 0.2s;
   }
 
-  /* RESPIRO: Aplica em qualquer elemento que seja o nome da peça */
+  /* RESPIRO FORÇADO NO NOME (Para não colar no preço) */
   #prec-resumo-container tr > *:first-child {
     white-space: nowrap !important;
-    padding-right: 50px !important; 
+    padding-right: 60px !important; /* Espaço de segurança de 60px */
     font-weight: 500;
     flex-shrink: 0;
   }
 
-  /* Preços empurrados para a direita */
   #prec-resumo-container tr > *:last-child {
     white-space: nowrap !important;
     text-align: right !important;
     margin-left: auto !important;
   }
-} /* <--- ESSA CHAVE FECHA O COMPUTADOR */
+
+  #prec-resumo-container tr:hover {
+    background: rgba(184, 134, 42, 0.08);
+  }
+}
 
 /* Ajuste para Tablet (2 cards) */
 @media (min-width: 768px) and (max-width: 1023px) {
