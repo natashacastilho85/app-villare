@@ -413,8 +413,6 @@
     padding: 1rem;
   }
 
-  /* Faz a tabela de resumo ocupar a largura total do container do grid 
-     mas o conteúdo dela (a table) ficará compacto */
   #prec-resumo-container {
     grid-column: 1 / -1;
     display: flex;
@@ -423,35 +421,36 @@
   }
 
   #prec-resumo-container table {
-    width: auto; 
+    width: auto !important; 
     border-collapse: collapse;
     background: rgba(184, 134, 42, 0.03);
     border-radius: 8px;
   }
 
   #prec-resumo-container tr {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
     padding: 0.5rem 1.2rem;
-    /* Removemos o gap fixo e vamos usar padding nos elementos */
     border-bottom: 1px solid rgba(184, 134, 42, 0.05);
     transition: background 0.2s;
   }
 
   /* Nome da Peça */
   #prec-resumo-container td:first-child {
-    white-space: nowrap;
-    padding-right: 3rem; /* ESTE É O RESPIRO: Garante 3 espaços de distância do preço */
+    white-space: nowrap !important;
+    padding-right: 4rem !important; /* Aumentei um pouco para garantir o luxo */
     font-weight: 500;
+    flex-shrink: 0; /* Impede o nome de "esmagar" o preço */
   }
 
   /* Preços */
   #prec-resumo-container td:last-child {
-    white-space: nowrap;
-    text-align: right;
-    margin-left: auto; /* Empurra o preço para o fim da linha mantendo o respiro */
+    white-space: nowrap !important;
+    text-align: right !important;
+    margin-left: auto !important;
   }
+} /* <--- ESSA CHAVE ESTAVA FALTANDO AQUI! */
 
 /* Ajuste para Tablet (2 cards) */
 @media (min-width: 768px) and (max-width: 1023px) {
