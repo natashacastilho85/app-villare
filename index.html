@@ -971,33 +971,36 @@
     </div>
 
     <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(184,134,42,0.2);">
-      <div style="font-family:'Calibri',serif; font-size: 1.1rem; color: var(--brown); margin-bottom: 1rem;">Dados da Ficha de Produção</div>
-      
-      <div class="field-group"><label class="field-label">Nome da Noiva</label><input type="text" id="e-f-noiva" class="field-input"></div>
-      <div class="field-group"><label class="field-label">Nome do Noivo</label><input type="text" id="e-f-noivo" class="field-input"></div>
-      <div class="field-group"><label class="field-label">Instagram</label><input type="text" id="e-f-insta" class="field-input"></div>
-      
-      <div style="display:flex; gap:0.5rem">
-        <div class="field-group" style="flex:1"><label class="field-label">Cerimonialista</label><input type="text" id="e-f-cerimonial" class="field-input"></div>
-        <div class="field-group" style="flex:1"><label class="field-label">Quem indicou?</label><input type="text" id="e-f-indicacao" class="field-input"></div>
-      </div>
+  <div style="font-family:'Calibri',serif; font-size: 1.1rem; color: var(--brown); margin-bottom: 1rem;">Dados da Ficha de Produção</div>
+  
+  <div class="field-group"><label class="field-label">Nome da Noiva</label><input type="text" id="c-f-noiva" class="field-input"></div>
+  <div class="field-group"><label class="field-label">Nome do Noivo</label><input type="text" id="c-f-noivo" class="field-input"></div>
+  <div class="field-group"><label class="field-label">Instagram</label><input type="text" id="c-f-insta" class="field-input"></div>
+  
+  <!-- Campo adicionado aqui -->
+  <div class="field-group"><label class="field-label">Quem fez o buquê?</label><input type="text" id="c-f-buque" class="field-input"></div>
 
-      <div style="display:flex; gap:0.5rem">
-        <div class="field-group" style="flex:1">
-          <label class="field-label">Iniciais/Data?</label>
-          <select id="e-f-iniciais" class="field-input"><option>Não</option><option>Sim</option></select>
-        </div>
-        <div class="field-group" style="flex:1">
-          <label class="field-label">Espelho?</label>
-          <select id="e-f-espelho" class="field-input"><option>Não</option><option>Sim</option></select>
-        </div>
-      </div>
-      
-      <div class="field-group" style="margin-top: 1rem;">
-        <label class="field-label">Observações Gerais da Produção</label>
-        <textarea id="e-f-obs-geral" class="field-input" rows="3" placeholder="Flores, cores, detalhes do fundo..."></textarea>
-      </div>
+  <div style="display:flex; gap:0.5rem">
+    <div class="field-group" style="flex:1"><label class="field-label">Cerimonialista</label><input type="text" id="c-f-cerimonial" class="field-input"></div>
+    <div class="field-group" style="flex:1"><label class="field-label">Quem indicou?</label><input type="text" id="c-f-indicacao" class="field-input"></div>
+  </div>
+
+  <div style="display:flex; gap:0.5rem">
+    <div class="field-group" style="flex:1">
+      <label class="field-label">Iniciais/Data?</label>
+      <select id="c-f-iniciais" class="field-input"><option>Não</option><option>Sim</option></select>
     </div>
+    <div class="field-group" style="flex:1">
+      <label class="field-label">Espelho?</label>
+      <select id="c-f-espelho" class="field-input"><option>Não</option><option>Sim</option></select>
+    </div>
+  </div>
+  
+  <div class="field-group" style="margin-top: 1rem;">
+    <label class="field-label">Observações Gerais da Produção</label>
+    <textarea id="c-f-obs-geral" class="field-input" rows="3" placeholder="Flores, cores, detalhes do fundo..."></textarea>
+  </div>
+</div>
 
     <button type="button" class="btn-primary" style="background:rgba(107,143,113,0.1); color:var(--sage); border:1px solid rgba(107,143,113,0.3); margin-top: 0.5rem; margin-bottom: 1.5rem;" onclick="imprimirFichaPeloForm('e')">🖨️ Imprimir Ficha Agora</button>
     <button class="btn-primary" onclick="saveEditContrato()">Salvar alterações</button>
@@ -1643,15 +1646,17 @@ async function saveContrato() {
   });
 
   // Coleta os dados da ficha
+  // Coleta os dados da ficha (incluindo buquê e obs)
   const ficha = {
     nomeNoiva: document.getElementById('c-f-noiva').value,
     nomeNoivo: document.getElementById('c-f-noivo').value,
     instagram: document.getElementById('c-f-insta').value,
+    quemFezBuque: document.getElementById('c-f-buque').value, // Novo
     cerimonialista: document.getElementById('c-f-cerimonial').value,
     quemIndicou: document.getElementById('c-f-indicacao').value,
     iniciaisData: document.getElementById('c-f-iniciais').value,
     espelhoPresente: document.getElementById('c-f-espelho').value,
-    obsGeral: document.getElementById('c-f-obs-geral').value
+    obsGeral: document.getElementById('c-f-obs-geral').value // Salvando obs
   };
 
   const valorFinal = Math.max(0, valorBruto - desconto);
@@ -1904,7 +1909,12 @@ function renderCalendario() {
   let html = '';
   for (let m=0; m<12; m++) {
     const casMes = contratos.filter(c=>parseInt(c.casamento.split('-')[1])-1===m).sort((a,b)=>a.casamento.localeCompare(b.casamento));
-    const contrFechados = contratos.filter(c=>parseInt(c.contrato.split('-')[1])-1===m).length;
+    
+    // ESTA É A LINHA QUE MUDA:
+    const contrFechados = contratos.filter(c => 
+      c.contrato.startsWith('2026') && 
+      parseInt(c.contrato.split('-')[1]) - 1 === m
+    ).length;
     html += `<div class="cal-month-card">
       <div class="cal-month-header">
         <div class="cal-month-name">${mesesNomes[m]}</div>
@@ -4119,14 +4129,12 @@ function gerarImpressaoFicha(c, f) {
 
       <h3 style="color: #4A3320; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-top: 30px;">Peças Escolhidas</h3>
       ${pecasHtml}
+      
       <div style="margin-top: 20px; padding: 15px; background: #faf9f7; border: 1px solid #e8e3dc; border-radius: 5px;">
         <strong style="color: #4A3320; font-size: 14px;">OBSERVAÇÕES DA PRODUÇÃO:</strong><br>
         <p style="white-space: pre-wrap; margin-top: 10px; color: #222;">${f.obsGeral || 'Nenhuma observação informada.'}</p>
       </div>
-<div style="margin-top: 20px; padding: 15px; background: #faf9f7; border: 1px solid #e8e3dc; border-radius: 5px;">
-        <strong style="color: #4A3320; font-size: 14px;">OBSERVAÇÕES DA PRODUÇÃO:</strong><br>
-        <p style="white-space: pre-wrap; margin-top: 10px; color: #222;">${f.obsGeral || 'Nenhuma observação informada.'}</p>
-      </div>
+
       <div class="row" style="margin-top: 20px; border-top: 2px solid #eee;"><div class="label">Valor Total Fechado</div><div class="value"><strong style="font-size:18px">${valorFmt}</strong></div></div>
       
       <div style="margin-top: 40px; padding-top: 15px;">
