@@ -4189,12 +4189,13 @@ window._renderPrecBody = function() {
     return;
   }
 
-  // A BARRA DE BUSCA FOI TOTALMENTE REMOVIDA DAQUI
+  // Reiniciando o HTML de forma limpa
+  let html = '';
   
-  // Cria apenas o container da Tabela de Resumo (que agora é sua navegação)
-  let html = '<div id="prec-resumo-container"></div>';
+  // Container da Tabela de Resumo
+  html += '<div id="prec-resumo-container"></div>';
 
-  // Desenha os cards das peças (agora sem os processos)
+  // Cards das peças
   pecas.forEach((p, idx) => {
     const d = getPrecPeca(p.id);
     html += window.renderPrecCard(p, d, valorHora, custoFixoHora, idx);
@@ -4202,7 +4203,9 @@ window._renderPrecBody = function() {
 
   el.innerHTML = html;
   
-  if (typeof atualizarTabelaResumo === 'function') atualizarTabelaResumo();
+  if (typeof atualizarTabelaResumo === 'function') {
+    atualizarTabelaResumo();
+  }
 };
 
 window.calcPrec = function(materiais, lucro, salario, custoFixoHora) {
