@@ -4314,6 +4314,8 @@ async function registrarPush(swReg) {
   }
 }
 
+// --- BLOCO FINAL ORGANIZADO (VILLARE ATELIER) ---
+
 async function ativarPushAposLogin() {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
   if (!window._swReg) return;
@@ -4322,13 +4324,40 @@ async function ativarPushAposLogin() {
     await registrarPush(window._swReg);
   }
 }
-async function ativarPushAposLogin() {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-  if (!window._swReg) return;
-  const perm = await Notification.requestPermission();
-  if (perm === 'granted') {
-    await registrarPush(window._swReg);
+
+async function registrarPush(swReg) {
+  try {
+    let sub = await swReg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await swReg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+    }
+    const { endpoint, keys } = sub.toJSON();
+    await fetch(`${SUPA_URL}/rest/v1/push_subscriptions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPA_KEY,
+        'Authorization': 'Bearer ' + SUPA_KEY,
+        'Prefer': 'resolution=merge-duplicates',
+      },
+      body: JSON.stringify({
+        endpoint, p256dh: keys.p256dh, auth: keys.auth, criado_em: new Date().toISOString(),
+      }),
+    });
+    console.log('Push registrado com sucesso!');
+  } catch (e) {
+    console.warn('Push subscription erro:', e);
   }
+}
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
 }
 
 function filtrarContratos() {
@@ -4343,23 +4372,12 @@ function filtrarContratos() {
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
-    try {
-      const reg = await navigator.serviceWorker.register('/sw.js');
-      window._swReg = reg;
-    } catch(e) { console.error("Erro SW:", e); }
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    window._swReg = reg;
   });
 }
 
-// --- REGRAS DE CÁLCULO E PRECIFICAÇÃO (O CORAÇÃO DO APP) ---
-
-window.toggleSecaoVisivel = function(id, setaId) {
-  const conteudo = document.getElementById(id);
-  const seta = document.getElementById(setaId);
-  if (conteudo && seta) {
-    conteudo.classList.toggle('aberto');
-    seta.textContent = conteudo.classList.contains('aberto') ? '▲' : '▼';
-  }
-};
+// --- REGRAS DE PRECIFICAÇÃO E CÁLCULO ---
 
 window.calcPrec = function(materiais, lucro, salario, custoFixoHora) {
   const custoMat = materiais.reduce((s, m) => s + (parseFloat(m.valor) || 0), 0);
@@ -4368,7 +4386,7 @@ window.calcPrec = function(materiais, lucro, salario, custoFixoHora) {
   const divisor = 1 - margemPercentual;
   const precoBase = divisor > 0 ? custoTotalReal / divisor : custoTotalReal;
   const valorLucro = precoBase - custoTotalReal;
-  const tarifaCartao = (typeof custosConfig !== 'undefined' && custosConfig.tarifaCartao) ? custosConfig.tarifaCartao / 100 : 0.0701; 
+  const tarifaCartao = getTarifaCartao(); 
   const precoCartao = precoBase / (1 - tarifaCartao);
   function paraFinal7(valor) {
     if (!valor || valor <= 0) return 0;
@@ -4384,124 +4402,105 @@ window.simularLucro = function(pecaId, valorVenda) {
   if (!venda || venda <= 0) { el.innerHTML = '← digite o valor'; return; }
   const d = getPrecPeca(pecaId);
   const mins = d.tempo || 60;
-  const salario = (typeof getValorHora === 'function' ? getValorHora() : 0) * (mins / 60);
-  const custoFixo = (typeof getCustoFixoPorHora === 'function' ? getCustoFixoPorHora() : 0) * (mins / 60);
-  const perdaResina = (d.perdaResina !== undefined ? d.perdaResina : 5) / 100;
-  const materiaisComPerda = d.materiais.map(m => {
-    if ((m.nome || '').toLowerCase().includes('resina') && perdaResina > 0) {
-      return { ...m, valor: (parseFloat(m.valor) || 0) * (1 + perdaResina) };
+  const sal = getValorHora() * (mins / 60);
+  const cf = getCustoFixoPorHora() * (mins / 60);
+  const perda = (d.perdaResina !== undefined ? d.perdaResina : 5) / 100;
+  const mats = d.materiais.map(m => {
+    if ((m.nome || '').toLowerCase().includes('resina') && perda > 0) {
+      return { ...m, valor: (parseFloat(m.valor) || 0) * (1 + perda) };
     }
     return m;
   });
-  const custoTotalReal = materiaisComPerda.reduce((s, m) => s + (parseFloat(m.valor) || 0), 0) + salario + custoFixo;
-  const tarifaCartao = (typeof custosConfig !== 'undefined' && custosConfig.tarifaCartao) ? custosConfig.tarifaCartao / 100 : 0.0701;
-  const vendaLiquida = venda * (1 - tarifaCartao);
-  const margemCalculada = ((vendaLiquida - custoTotalReal) / vendaLiquida) * 100;
-  const lucroEmReais = vendaLiquida - custoTotalReal;
-  const fmt = v => 'R$ ' + Math.abs(v).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
-  const cor = margemCalculada >= 0 ? 'var(--sage)' : 'var(--bordeaux)';
-  el.innerHTML = `<span style="color:${cor}"><strong>${margemCalculada.toFixed(1)}%</strong> · lucro ${fmt(lucroEmReais)}</span>`;
+  const custoTotal = mats.reduce((s, m) => s + (parseFloat(m.valor) || 0), 0) + sal + cf;
+  const vendaLiq = venda * (1 - getTarifaCartao());
+  const margem = ((vendaLiq - custoTotal) / vendaLiq) * 100;
+  const lucro = vendaLiq - custoTotal;
+  const fmt = v => 'R$ ' + Math.abs(v).toLocaleString('pt-BR', {minimumFractionDigits:2});
+  el.innerHTML = `<span style="color:${margem >= 0 ? 'var(--sage)' : 'var(--bordeaux)'}"><strong>${margem.toFixed(1)}%</strong> · lucro ${fmt(lucro)}</span>`;
 };
 
 window.recalcularCard = function(pecaId) {
   const d = getPrecPeca(pecaId);
   const mins = d.tempo || 60;
-  const salario = (typeof getValorHora === 'function' ? getValorHora() : 0) * (mins / 60);
-  const custoFixo = (typeof getCustoFixoPorHora === 'function' ? getCustoFixoPorHora() : 0) * (mins / 60);
-  const perdaResina = (d.perdaResina !== undefined ? d.perdaResina : 5) / 100;
-  const materiaisComPerda = d.materiais.map(m => {
-    if ((m.nome || '').toLowerCase().includes('resina') && perdaResina > 0) {
-      return { ...m, valor: (parseFloat(m.valor) || 0) * (1 + perdaResina) };
+  const sal = getValorHora() * (mins / 60);
+  const cf = getCustoFixoPorHora() * (mins / 60);
+  const perda = (d.perdaResina !== undefined ? d.perdaResina : 5) / 100;
+  const mats = d.materiais.map(m => {
+    if ((m.nome || '').toLowerCase().includes('resina') && perda > 0) {
+      return { ...m, valor: (parseFloat(m.valor) || 0) * (1 + perda) };
     }
     return m;
   });
-  const r = window.calcPrec(materiaisComPerda, d.lucro, salario, custoFixo);
-  const fmtR = v => 'R$ ' + (parseFloat(v)||0).toLocaleString('pt-BR', {minimumFractionDigits:2});
+  const r = window.calcPrec(mats, d.lucro, sal, cf);
   const card = document.getElementById('prec-card-' + pecaId);
   if (!card) return;
+  const fmt = v => 'R$ ' + (parseFloat(v)||0).toLocaleString('pt-BR', {minimumFractionDigits:2});
   const rows = card.querySelectorAll('.prec-res-row .val');
-  if (rows[0]) rows[0].textContent = fmtR(r.custoMat);
-  if (rows[1]) rows[1].textContent = fmtR(salario);
-  if (rows[2]) rows[2].textContent = fmtR(custoFixo);
-  if (rows[3]) rows[3].textContent = fmtR(r.custoTotalReal);
-  if (rows[4]) rows[4].textContent = fmtR(r.valorLucro); 
-  const totais = card.querySelectorAll('.prec-res-total .val');
-  if (totais[0]) totais[0].textContent = fmtR(r.precoBase);
-  if (totais[1]) totais[1].textContent = fmtR(r.precoCartao);
+  if (rows[0]) rows[0].textContent = fmt(r.custoMat);
+  if (rows[1]) rows[1].textContent = fmt(sal);
+  if (rows[2]) rows[2].textContent = fmt(cf);
+  if (rows[3]) rows[3].textContent = fmt(r.custoTotalReal);
+  if (rows[4]) rows[4].textContent = fmt(r.valorLucro);
+  const tots = card.querySelectorAll('.prec-res-total .val');
+  if (tots[0]) tots[0].textContent = fmt(r.precoBase);
+  if (tots[1]) tots[1].textContent = fmt(r.precoCartao);
 };
 
 window.renderPrecCard = function(p, d, valorHora, custoFixoHora, cardIdx) {
   const mins = d.tempo || 60;
-  const salario = valorHora * (mins / 60);
-  const custoFixo = custoFixoHora * (mins / 60);
-  const perdaResina = (d.perdaResina !== undefined ? d.perdaResina : 5) / 100;
-  const materiaisComPerda = d.materiais.map(m => {
-    if ((m.nome || '').toLowerCase().includes('resina') && perdaResina > 0) {
-      return { ...m, valor: (parseFloat(m.valor) || 0) * (1 + perdaResina) };
+  const sal = valorHora * (mins / 60);
+  const cf = custoFixoHora * (mins / 60);
+  const perda = (d.perdaResina !== undefined ? d.perdaResina : 5) / 100;
+  const mats = d.materiais.map(m => {
+    if ((m.nome || '').toLowerCase().includes('resina') && perda > 0) {
+      return { ...m, valor: (parseFloat(m.valor) || 0) * (1 + perda) };
     }
     return m;
   });
-  const r = window.calcPrec(materiaisComPerda, d.lucro, salario, custoFixo);
-  const fmtR = v => 'R$ ' + (parseFloat(v)||0).toLocaleString('pt-BR', {minimumFractionDigits:2});
+  const r = window.calcPrec(mats, d.lucro, sal, cf);
+  const fmt = v => 'R$ ' + (parseFloat(v)||0).toLocaleString('pt-BR', {minimumFractionDigits:2});
   const isPC = window.innerWidth >= 1024;
   let matRows = d.materiais.map((m, i) => {
     if (m.matGlobalId) {
       const matG = (typeof matGlobais !== 'undefined') ? matGlobais.find(x => x.id === m.matGlobalId) : null;
       if (matG) {
-        return `<div class="prec-mat-row prec-mat-row-qtd">
-          <span class="prec-mat-nome">${matG.nome}</span>
-          <div class="prec-mat-qtd-wrap">
-            <input class="prec-mat-qtd-input" type="number" step="0.01" value="${m.qtdUsada || ''}" oninput="atualizarQtdMatPrec(${p.id}, ${i}, this.value)">
-            <span class="prec-mat-unit">${matG.unidade}</span>
-          </div>
-          <span class="prec-mat-custo-calc">${m.valor > 0 ? fmtR(m.valor) : '—'}</span>
-        </div>`;
+        return `<div class="prec-mat-row prec-mat-row-qtd"><span class="prec-mat-nome">${matG.nome}</span><div class="prec-mat-qtd-wrap"><input class="prec-mat-qtd-input" type="number" step="0.01" value="${m.qtdUsada || ''}" oninput="atualizarQtdMatPrec(${p.id}, ${i}, this.value)"><span class="prec-mat-unit">${matG.unidade}</span></div><span class="prec-mat-custo-calc">${m.valor > 0 ? fmt(m.valor) : '—'}</span></div>`;
       }
     }
-    return `<div class="prec-mat-row">
-      <span class="prec-mat-nome">${m.nome}</span>
-      <input class="prec-mat-input" type="number" value="${m.valor > 0 ? m.valor.toFixed(2) : ''}" oninput="atualizarMatPrec(${p.id}, ${i}, this.value)">
-    </div>`;
+    return `<div class="prec-mat-row"><span class="prec-mat-nome">${m.nome}</span><input class="prec-mat-input" type="number" value="${m.valor > 0 ? m.valor.toFixed(2) : ''}" oninput="atualizarMatPrec(${p.id}, ${i}, this.value)"></div>`;
   }).join('');
 
   return `<div class="prec-peca-card ${cardIdx % 2 === 1 ? 'par' : ''}" id="prec-card-${p.id}">
-    <div class="prec-peca-header">
-      <span class="prec-peca-nome" onclick="openPeca(${p.id})">${p.nome} ✏️</span>
-    </div>
-    <div class="materiais-toggle" style="${isPC ? 'display:none' : ''}" onclick="toggleSecaoVisivel('list-mat-${p.id}', 'seta-mat-${p.id}')">
-      <span>Materiais</span><span id="seta-mat-${p.id}">▼</span>
-    </div>
-    <div class="materiais-content ${isPC ? 'aberto' : ''}" id="list-mat-${p.id}">
-      ${matRows}
-      <button class="prec-add-btn" onclick="adicionarMatPrec(${p.id})">＋ Adicionar material</button>
-    </div>
+    <div class="prec-peca-header"><span class="prec-peca-nome" onclick="openPeca(${p.id})">${p.nome} ✏️</span></div>
+    <div class="materiais-toggle" style="${isPC ? 'display:none' : ''}" onclick="toggleSecaoVisivel('list-mat-${p.id}', 'seta-mat-${p.id}')"><span>Materiais</span><span id="seta-mat-${p.id}">▼</span></div>
+    <div class="materiais-content ${isPC ? 'aberto' : ''}" id="list-mat-${p.id}">${matRows}<button class="prec-add-btn" onclick="adicionarMatPrec(${p.id})">＋ Material</button></div>
     <div class="prec-resultado">
-      <div class="prec-res-row"><span class="lbl">Custo Total</span><span class="val">${fmtR(r.custoTotalReal)}</span></div>
-      <div class="prec-res-row"><span class="lbl" style="color:var(--sage)">Lucro</span><span class="val" style="color:var(--sage)">${fmtR(r.valorLucro)}</span></div>
-      <div class="prec-res-total"><span class="lbl">Venda PIX</span><span class="val">${fmtR(r.precoBase)}</span></div>
-      <div class="prec-res-total"><span class="lbl" style="color:var(--brown)">Venda CARTÃO</span><span class="val" style="font-size:1.3rem; color:var(--brown)">${fmtR(r.precoCartao)}</span></div>
+      <div class="prec-res-row"><span class="lbl">Custo Total</span><span class="val">${fmt(r.custoTotalReal)}</span></div>
+      <div class="prec-res-row"><span class="lbl" style="color:var(--sage)">Lucro</span><span class="val" style="color:var(--sage)">${fmt(r.valorLucro)}</span></div>
+      <div class="prec-res-total"><span class="lbl">PIX</span><span class="val">${fmt(r.precoBase)}</span></div>
+      <div class="prec-res-total"><span class="lbl" style="color:var(--brown)">CARTÃO</span><span class="val" style="font-size:1.3rem; color:var(--brown)">${fmt(r.precoCartao)}</span></div>
     </div>
   </div>`;
 };
 
+window.toggleSecaoVisivel = function(id, setaId) {
+  const c = document.getElementById(id); const s = document.getElementById(setaId);
+  if (c && s) { c.classList.toggle('aberto'); s.textContent = c.classList.contains('aberto') ? '▲' : '▼'; }
+};
+
 window._renderPrecBody = function() {
-  const vHora = typeof getValorHora === 'function' ? getValorHora() : 0;
-  const cfHora = typeof getCustoFixoPorHora === 'function' ? getCustoFixoPorHora() : 0;
+  const vH = getValorHora(); const cfH = getCustoFixoPorHora();
   pecas.sort((a, b) => a.nome.localeCompare(b.nome));
-  const el = document.getElementById('prec-body');
-  if (!el) return;
+  const el = document.getElementById('prec-body'); if (!el) return;
   let html = '<div id="prec-resumo-container"></div>';
-  pecas.forEach((p, idx) => {
-    const d = getPrecPeca(p.id);
-    html += window.renderPrecCard(p, d, vHora, cfHora, idx);
-  });
+  pecas.forEach((p, idx) => { const d = getPrecPeca(p.id); html += window.renderPrecCard(p, d, vH, cfH, idx); });
   el.innerHTML = html;
   if (typeof atualizarTabelaResumo === 'function') atualizarTabelaResumo();
 };
 
-// --- REINICIALIZAÇÃO FINAL ---
+// --- LIGA O APP ---
 initApp();
-
+  
 </script>
 </body>
 </html>
