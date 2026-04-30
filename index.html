@@ -381,10 +381,21 @@
   .ctab-td-total { font-family:'Calibri',serif; font-size:1.05rem; color:var(--brown); padding:0.65rem 0.9rem; text-align:center; white-space:nowrap; }
   .ctab-td-total-label { font-size:0.6rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); padding:0.65rem 0.8rem; position:sticky; left:0; background:white; white-space:nowrap; }
 
-/* --- ESTILO GLOBAL PARA COMPUTADOR (Villare Atelier) --- */
+/* --- AJUSTE GLOBAL PC (VILLARE ATELIER) --- */
 @media (min-width: 1024px) {
   
-  /* 1. TELAS EM GRID (Início, Contratos, Gastos, Precificação) */
+  /* Mantém as telas funcionando uma por vez (evita o erro do print) */
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: none;
+    padding: 2rem;
+  }
+  .screen.active {
+    display: block !important;
+  }
+
+  /* Aplica 3 colunas APENAS onde existem listas de cards */
   .metrics-grid, 
   #contratos-list, 
   #gastos-list, 
@@ -397,74 +408,66 @@
     align-items: start !important;
   }
 
-  /* 2. AJUSTES DE LARGURA TOTAL PARA CABEÇALHOS E RESUMOS */
+  /* Faz os títulos e seções de resumo ocuparem a largura toda da grade */
   .section-title, 
   .fin-totais, 
   #prec-resumo-container,
   #devedores-section,
-  .filter-row {
+  .filter-row,
+  .producao-card {
     grid-column: 1 / -1 !important;
   }
 
-  /* 3. TELA DE INÍCIO (Ajuste dos cards de métricas e produção) */
-  .metric-card { margin-bottom: 0 !important; height: 100%; }
-  .producao-card { grid-column: 1 / -1 !important; }
+  /* Ajuste para as tabelas de dados não ficarem espremidas */
+  #screen-comparativos > div[style*="overflow-x:auto"] {
+    margin-bottom: 2rem !important;
+  }
 
-  /* 4. TELA DE CONTRATO (Detalhe) */
-  #detail-body .drawer {
-    max-width: 800px !important;
+  /* RESPIRO E TABELA COMPACTA (O que já tínhamos acertado) */
+  .prec-resumo-card {
+    width: auto !important;
+    min-width: 450px;
+    background: rgba(184, 134, 42, 0.03);
+    border: 1px solid rgba(184, 134, 42, 0.15);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .prec-resumo-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 0.6rem 1.2rem !important;
+    border-bottom: 1px solid rgba(184, 134, 42, 0.08);
+  }
+
+  .prec-resumo-nome {
+    white-space: nowrap !important;
+    padding-right: 60px !important; 
+    font-weight: 500;
+  }
+
+  .prec-resumo-val {
+    white-space: nowrap !important;
+    text-align: right !important;
+    margin-left: auto !important;
+  }
+
+  /* Ajuste dos Drawers (Materiais/Custos) para não ficarem gigantes */
+  .drawer {
+    max-width: 1100px !important;
     margin: 0 auto !important;
     left: 50% !important;
     transform: translateX(-50%) translateY(100%) !important;
   }
-  .drawer-overlay.open #detail-body .drawer {
+  .drawer-overlay.open .drawer {
     transform: translateX(-50%) translateY(0) !important;
-  }
-
-  /* 5. FINANCEIRO E DADOS (Tabelas lado a lado) */
-  #financeiro-list, #screen-comparativos {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 1.5rem !important;
-  }
-  #screen-comparativos .section-title { grid-column: 1 / -1 !important; }
-
-  /* 6. MATERIAIS E CUSTOS (Lista de Insumos) */
-  #mat-globais-list, #c-fixos-list, #c-processos-list {
-    display: grid !important;
-    grid-template-columns: repeat(2, 1fr) !important;
-    gap: 1rem !important;
-  }
-
-  /* 7. REGRAS DE RESPIRO (Igual ao que fizemos na precificação) */
-  .prec-resumo-card, .mat-global-card {
-    width: auto !important;
-    min-width: 400px;
-  }
-
-  /* Aplica o distanciamento elegante em todas as listas tipo "tabela" */
-  .prec-resumo-row, .mat-global-header, .detail-row, .fin-row {
-    display: flex !important;
-    justify-content: space-between !important;
-    gap: 50px !important; /* Respiro entre nome e valor */
-  }
-
-  .prec-resumo-nome, .mat-global-nome, .dl, .lbl {
-    white-space: nowrap !important;
-    flex-shrink: 0;
-  }
-
-  /* 8. DRAWERS (Materiais e Custos mais largos no PC) */
-  #drawer-materiais .drawer, #drawer-custos .drawer, #drawer-prec .drawer {
-    max-width: 1200px !important;
-    left: 50% !important;
-    margin-left: -600px !important;
   }
 }
 
 /* Ajuste para Tablet (2 colunas) */
 @media (min-width: 768px) and (max-width: 1023px) {
-  .metrics-grid, #contratos-list, #gastos-list, #prec-body, #financeiro-list {
+  .metrics-grid, #contratos-list, #gastos-list, #prec-body {
     display: grid !important;
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 1rem;
