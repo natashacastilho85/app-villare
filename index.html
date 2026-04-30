@@ -396,6 +396,7 @@
   }
 
   /* FORÇA 3 COLUNAS EM TODAS AS LISTAS E GRIDS */
+  /* Adicionado seletores específicos para os itens internos não esticarem */
   .metrics-grid, 
   #contratos-list, 
   #gastos-list, 
@@ -404,8 +405,8 @@
   #catalogo-list,
   #proximos-list,
   #financeiro-list,
-  #producao-list, /* NOVO: Alinha buquês em produção na Home */
-  #pecas-selecionadas, /* NOVO: Alinha as peças nos formulários */
+  #producao-list,
+  #pecas-selecionadas,
   #e-pecas-selecionadas {
     display: grid !important;
     grid-template-columns: repeat(3, 1fr) !important;
@@ -414,9 +415,21 @@
     width: 100% !important;
   }
 
-  /* AJUSTE PARA A LISTA DE PEÇAS NA PRECIFICAÇÃO (PRINT 102148) */
-  /* Como essa lista usa uma estrutura de linhas simples, vamos forçar a grid nela também */
+  /* CORREÇÃO ESPECÍFICA PARA OS BUQUÊS EM PRODUÇÃO E PEÇAS */
+  /* Isso impede que o conteúdo interno force o card a ocupar a linha toda */
+  .producao-row, .piece-card, .contract-card, .gasto-month-card, .cal-month-card {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* AJUSTE PARA A TABELA DE PREÇOS (PRECIFICAÇÃO) */
+  /* Transforma a lista vertical em uma grade de 3 colunas compactas */
   .prec-resumo-card {
+    display: block !important;
+    grid-column: 1 / -1 !important;
+  }
+  
+  #prec-resumo-container .prec-resumo-card {
     display: grid !important;
     grid-template-columns: repeat(3, 1fr) !important;
     gap: 0.5rem 2rem !important;
@@ -428,7 +441,7 @@
     margin-bottom: 1rem;
   }
 
-  /* ITENS DE LARGURA TOTAL */
+  /* SEÇÕES QUE DEVEM CONTINUAR LARGAS (TÍTULOS E TOTAIS) */
   .section-title, 
   .fin-totais, 
   #prec-resumo-container,
@@ -436,6 +449,7 @@
   .filter-row,
   .producao-card {
     grid-column: 1 / -1 !important;
+    width: 100% !important;
   }
 
   .bottom-nav {
