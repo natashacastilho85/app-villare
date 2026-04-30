@@ -1233,12 +1233,23 @@ async function sbUpdate(table, id, body) { return sbFetch(table+'?id=eq.'+id, { 
 async function sbDelete(table, id)    { return sbFetch(table+'?id=eq.'+id, { method:'DELETE' }); }
 
 function mapContrato(r) {
-  return { id:r.id, nome:r.nome, status:r.status, casamento:r.casamento, contrato:r.contrato,
-    cidade:r.cidade||'', estado:r.estado||'', envio:r.envio||'Correios',
-    chegada:r.chegada||null, entrega:r.entrega||null, formaPag:r.forma_pag||'pix',
-    valorBruto:parseFloat(r.valor_bruto)||0, pago:parseFloat(r.pago)||0,
-    desconto:parseFloat(r.desconto)||0,
-    telefone:r.telefone||'',
+  // Se a data vier vazia do banco, o app usa uma data padrão e não morre mais
+  return { 
+    id: r.id, 
+    nome: r.nome || 'Noiva de Teste', 
+    status: r.status || 'Reserva', 
+    casamento: r.casamento || '2026-01-01', 
+    contrato: r.contrato || '2026-01-01',
+    cidade: r.cidade || '', 
+    estado: r.estado || '', 
+    envio: r.envio || 'Correios',
+    chegada: r.chegada || null, 
+    entrega: r.entrega || null, 
+    formaPag: r.forma_pag || 'pix',
+    valorBruto: parseFloat(r.valor_bruto) || 0, 
+    pago: parseFloat(r.pago) || 0,
+    desconto: parseFloat(r.desconto) || 0,
+    telefone: r.telefone || '',
     pecas: Array.isArray(r.pecas) ? r.pecas : [],
     pagamentos: Array.isArray(r.pagamentos) ? r.pagamentos : [],
     ficha_producao: r.ficha_producao || {}
