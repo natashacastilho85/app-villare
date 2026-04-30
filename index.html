@@ -4496,6 +4496,59 @@ window.renderPrecCard = function(p, d, valorHora, custoFixoHora, cardIdx) {
 };
 
 // --- FIM DA CORREÇÃO BLINDADA FINAL ---
+
+  // --- CORREÇÃO BLINDADA: CUSTOS E PRAZO ---
+window.openCustos = function() {
+  document.getElementById('c-salario-mensal').value = custosConfig.salarioMensal || '';
+  document.getElementById('c-horas-dia').value = custosConfig.horasPorDia || '';
+  document.getElementById('c-dias-mes').value = custosConfig.diasPorMes || '';
+  
+  const elTarifa = document.getElementById('c-tarifa-cartao');
+  if (elTarifa) elTarifa.value = custosConfig.tarifaCartao || '';
+  
+  const elPrazo = document.getElementById('c-prazo-producao');
+  if (elPrazo) elPrazo.value = custosConfig.prazoProducao || 120;
+  
+  renderItensFixos();
+  renderProcessos();
+  atualizarPreviewCustos();
+  openDrawer('drawer-custos');
+};
+
+window.salvarCustos = function() {
+  try {
+    custosConfig.salarioMensal = parseFloat(document.getElementById('c-salario-mensal').value) || 0;
+    custosConfig.horasPorDia = parseFloat(document.getElementById('c-horas-dia').value) || 0;
+    custosConfig.diasPorMes = parseFloat(document.getElementById('c-dias-mes').value) || 0;
+    
+    const elTarifa = document.getElementById('c-tarifa-cartao');
+    if (elTarifa && elTarifa.value !== '') {
+      custosConfig.tarifaCartao = parseFloat(elTarifa.value);
+    } else {
+      custosConfig.tarifaCartao = 6.99;
+    }
+    
+    // Captura o prazo blindado
+    const elPrazo = document.getElementById('c-prazo-producao');
+    if (elPrazo && elPrazo.value !== '') {
+      custosConfig.prazoProducao = parseInt(elPrazo.value);
+    } else {
+      custosConfig.prazoProducao = 120; 
+    }
+    
+    // Salva na memória do navegador
+    localStorage.setItem('villare-custos', JSON.stringify(custosConfig));
+
+    closeDrawer('drawer-custos');
+    
+    // Atualiza a tela imediatamente para refletir o novo prazo nos cards
+    if (typeof window._renderPrecBody === 'function') window._renderPrecBody();
+    if (typeof renderAll === 'function') renderAll(); 
+    
+  } catch (erro) {
+    alert("Erro ao salvar! Detalhe: " + erro.message);
+  }
+};
 </script>
 </body>
 </html>
