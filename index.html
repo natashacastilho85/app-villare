@@ -4594,126 +4594,116 @@ window.salvarCustos = function() {
     alert("Erro ao salvar! Detalhe: " + erro.message);
   }
 };
-  // --- CORREÇÃO BLINDADA: MATERIAIS, TABELA E SALVAMENTO ---
+  // --- COMBO DE SOBREVIVÊNCIA: CELULAR RETRÁTIL + TRAVA PC + SALVAMENTO BLINDADO ---
 
-// 1. Atualizar a quantidade de um material global
-window.atualizarQtdMatPrec = function(pecaId, idx, val) {
-  const d = getPrecPeca(pecaId);
-  const m = d.materiais[idx];
-  if (!m || !m.matGlobalId) return;
-  
-  const matG = typeof matGlobais !== 'undefined' ? matGlobais.find(x => x.id === m.matGlobalId) : null;
-  if (!matG) return;
-  
-  const qtd = parseFloat(val) || 0;
-  const qtdTotal = parseFloat(matG.qtdTotal) || 0;
-  const valorPago = parseFloat(matG.valorPago) || 0;
-  m.qtdUsada = qtd;
-  
-  const custo = qtdTotal > 0 ? (qtd / qtdTotal) * valorPago : 0;
-  m.valor = parseFloat(custo.toFixed(2));
-  m.nome = matG.nome;
-  
-  const elCusto = document.getElementById('prec-mat-custo-' + pecaId + '-' + idx);
-  if (elCusto) elCusto.textContent = m.valor > 0 ? 'R$ ' + m.valor.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
-  
-  window.recalcularCard(pecaId); // Atualiza os números e a tabela de resumo
-  
-  const card = document.getElementById('prec-card-' + pecaId);
-  if (card) {
-    const simulInput = card.querySelector('.prec-simul-input');
-    if (simulInput && simulInput.value) window.simularLucro(pecaId, simulInput.value);
+// 1. Detecta se é computador para manter tudo aberto
+const isPC = () => window.innerWidth >= 1024;
+
+// 2. Função de clique para as setinhas
+window.toggleSecaoVisivel = function(id, setaId) {
+  const conteudo = document.getElementById(id);
+  const seta = document.getElementById(setaId);
+  if (conteudo.classList.contains('aberto')) {
+    conteudo.classList.remove('aberto');
+    seta.textContent = '▼';
+  } else {
+    conteudo.classList.add('aberto');
+    seta.textContent = '▲';
   }
-  
-  window.salvarPrecLocal(); // <-- GARANTE QUE SALVA NO BANCO DE DADOS
-  if (typeof renderCatalogo === 'function') renderCatalogo();
 };
 
-// 2. Atualizar um material manual
-window.atualizarMatPrec = function(pecaId, idx, val) {
-  const d = getPrecPeca(pecaId);
-  d.materiais[idx].valor = parseFloat(val) || 0;
+// 3. O Motor do Card (renderPrecCard) - REESCRITO E BLINDADO
+window.renderPrecCard = function(p, d, valorHora, custoFixoHora, cardIdx) {
+  const mins = d.tempo || 60;
+  const salario = valorHora * (mins / 60);
+  const custoFixo = custoFixoHora * (mins / 60);
+  const perdaResina = (d.perdaResina !== undefined ? d.perdaResina : 5) / 100;
   
-  window.recalcularCard(pecaId);
-  window.salvarPrecLocal(); // <-- GARANTE QUE SALVA NO BANCO DE DADOS
-  if (typeof renderCatalogo === 'function') renderCatalogo();
-};
-
-// 3. Remover um material
-window.removerMatPrec = function(pecaId, idx) {
-  const d = getPrecPeca(pecaId);
-  d.materiais.splice(idx, 1); // Remove da lista
-  
-  const cardIdx = pecas.findIndex(x => x.id === pecaId);
-  const p = pecas.find(x => x.id === pecaId);
-  const card = document.getElementById('prec-card-' + pecaId);
-  
-  if (card && p) {
-    card.outerHTML = window.renderPrecCard(p, d, getValorHora(), getCustoFixoPorHora(), cardIdx);
-  }
-  
-  window.recalcularCard(pecaId); // Atualiza os números e a tabela de resumo
-  window.salvarPrecLocal(); // <-- GARANTE QUE SALVA NO BANCO DE DADOS
-  if (typeof renderCatalogo === 'function') renderCatalogo();
-};
-
-// 4. Confirmar adição de material do banco
-window.confirmarAddMaterial = function() {
-  if (!matModalSelId || !matModalPecaId) return;
-  const m = matGlobais.find(x => x.id === matModalSelId);
-  if (!m) return;
-  
-  const qtdUsada = parseFloat(document.getElementById('modal-mat-qtd').value);
-  if (!qtdUsada || qtdUsada <= 0) { alert('Informe a quantidade usada.'); return; }
-  
-  const qtdTotal = parseFloat(m.qtdTotal) || 0;
-  const valorPago = parseFloat(m.valorPago) || 0;
-  const custo = qtdTotal > 0 ? (qtdUsada / qtdTotal) * valorPago : 0;
-
-  const d = getPrecPeca(matModalPecaId);
-  d.materiais.push({
-    nome: m.nome,
-    valor: parseFloat(custo.toFixed(2)),
-    matGlobalId: m.id,
-    qtdUsada
+  const materiaisComPerda = d.materiais.map(m => {
+    if ((m.nome || '').toLowerCase().includes('resina') && perdaResina > 0) {
+      return { ...m, valor: (parseFloat(m.valor) || 0) * (1 + perdaResina) };
+    }
+    return m;
   });
+  
+  const r = window.calcPrec(materiaisComPerda, d.lucro, salario, custoFixo);
+  const fmtR = v => 'R$ ' + (parseFloat(v)||0).toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2});
+  const noPC = isPC();
 
-  const cardIdx = pecas.findIndex(x => x.id === matModalPecaId);
-  const p = pecas.find(x => x.id === matModalPecaId);
-  const card = document.getElementById('prec-card-' + matModalPecaId);
-  
-  if (card && p) {
-    card.outerHTML = window.renderPrecCard(p, d, getValorHora(), getCustoFixoPorHora(), cardIdx);
-  }
-  
-  window.recalcularCard(matModalPecaId); // Atualiza os números e a tabela de resumo
-  window.salvarPrecLocal(); // <-- GARANTE QUE SALVA NO BANCO DE DADOS
-  if (typeof renderCatalogo === 'function') renderCatalogo();
-  closeModalSelMat();
+  let matRows = d.materiais.map((m, i) => {
+    if (m.matGlobalId) {
+      const matG = typeof matGlobais !== 'undefined' ? matGlobais.find(x => x.id === m.matGlobalId) : null;
+      if (matG) {
+        return `<div class="prec-mat-row prec-mat-row-qtd">
+          <span class="prec-mat-nome">${matG.nome}</span>
+          <div class="prec-mat-qtd-wrap">
+            <input class="prec-mat-qtd-input" type="number" step="0.01" min="0" value="${m.qtdUsada || ''}" placeholder="0" oninput="atualizarQtdMatPrec(${p.id}, ${i}, this.value)">
+            <span class="prec-mat-unit">${matG.unidade}</span>
+          </div>
+          <span class="prec-mat-custo-calc" id="prec-mat-custo-${p.id}-${i}">${m.valor > 0 ? fmtR(m.valor) : '—'}</span>
+          <button class="prec-mat-del" onclick="removerMatPrec(${p.id}, ${i})">×</button>
+        </div>`;
+      }
+    }
+    return `<div class="prec-mat-row">
+      <span class="prec-mat-nome">${m.nome}</span>
+      <input class="prec-mat-input" type="number" step="0.01" min="0" value="${m.valor > 0 ? m.valor.toFixed(2) : ''}" placeholder="R$" oninput="atualizarMatPrec(${p.id}, ${i}, this.value)">
+      <button class="prec-mat-del" onclick="removerMatPrec(${p.id}, ${i})">×</button>
+    </div>`;
+  }).join('');
+
+  return `<div class="prec-peca-card ${cardIdx % 2 === 1 ? 'par' : ''}" id="prec-card-${p.id}">
+    <div class="prec-peca-header">
+      <span class="prec-peca-nome" onclick="openPeca(${p.id})">${p.nome} ✏️</span>
+      <div style="display:flex; gap:1rem; align-items:center;">
+        <button onclick="duplicarPecaPrec(${p.id})" title="Duplicar">📋</button>
+        <button onclick="excluirPecaPrec(${p.id})" title="Excluir">🗑️</button>
+        <label style="font-size:0.65rem; color:var(--muted); display:flex; align-items:center; gap:0.2rem">
+          <input type="checkbox" ${d.exibirCatalogo !== false ? 'checked' : ''} onchange="toggleExibirCatalogo(${p.id}, this.checked)"> Catálogo
+        </label>
+      </div>
+    </div>
+
+    <!-- Barra de Materiais (Retrátil no celular, invisível no PC) -->
+    <div class="materiais-toggle" style="${noPC ? 'display:none !important' : ''}" onclick="toggleSecaoVisivel('list-mat-${p.id}', 'seta-mat-${p.id}')">
+      <span>Materiais Utilizados</span><span id="seta-mat-${p.id}">▼</span>
+    </div>
+    
+    <!-- Conteúdo dos Materiais (Sempre aberto no PC) -->
+    <div class="materiais-content ${noPC ? 'aberto' : ''}" id="list-mat-${p.id}">
+      ${matRows}
+      <button class="prec-add-btn" onclick="adicionarMatPrec(${p.id})">＋ Adicionar material</button>
+    </div>
+
+    <div class="prec-lucro-row">
+      <label>Tempo (min)</label>
+      <input class="prec-lucro-input" type="number" value="${mins}" oninput="atualizarTempoPrec(${p.id}, this.value)">
+      <label>Margem (%)</label>
+      <input class="prec-lucro-input" type="number" value="${d.lucro}" oninput="atualizarLucroPrec(${p.id}, this.value)">
+    </div>
+
+    <div class="prec-resultado">
+      <div class="prec-res-row"><span class="lbl">Custo Total Real</span><span class="val">${fmtR(r.custoTotalReal)}</span></div>
+      <div class="prec-res-row"><span class="lbl" style="color:var(--sage); font-weight:600;">Lucro (R$)</span><span class="val" style="color:var(--sage); font-weight:600;">${fmtR(r.valorLucro)}</span></div>
+      <div class="prec-res-total"><span class="lbl">Preço PIX</span><span class="val">${fmtR(r.precoBase)}</span></div>
+      <div class="prec-res-total"><span class="lbl">Preço CARTÃO</span><span class="val" style="font-size:1.3rem; color:var(--brown)">${fmtR(r.precoCartao)}</span></div>
+    </div>
+  </div>`;
 };
 
-// 5. Confirmar adição de material manual
-window.addMaterialManual = function() {
-  const nome = document.getElementById('modal-mat-manual-nome').value.trim();
-  const valor = parseFloat(document.getElementById('modal-mat-manual-valor').value);
-  if (!nome) { alert('Informe o nome do material.'); return; }
-
-  const d = getPrecPeca(matModalPecaId);
-  d.materiais.push({ nome, valor: valor || 0 });
-
-  const cardIdx = pecas.findIndex(x => x.id === matModalPecaId);
-  const p = pecas.find(x => x.id === matModalPecaId);
-  const card = document.getElementById('prec-card-' + matModalPecaId);
-  
-  if (card && p) {
-    card.outerHTML = window.renderPrecCard(p, d, getValorHora(), getCustoFixoPorHora(), cardIdx);
-  }
-  
-  window.recalcularCard(matModalPecaId); // Atualiza os números e a tabela de resumo
-  window.salvarPrecLocal(); // <-- GARANTE QUE SALVA NO BANCO DE DADOS
-  if (typeof renderCatalogo === 'function') renderCatalogo();
-  closeModalSelMat();
+// 4. Salvar automático no banco (Supabase)
+window.salvarPrecLocal = async function() {
+  try {
+    await sbFetch('configuracoes', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chave: 'prec-dados', valor: precDados })
+    });
+  } catch(e) { console.error("Erro banco:", e); }
 };
+
+window.atualizarTempoPrec = function(id, v) { getPrecPeca(id).tempo = parseInt(v)||60; window.recalcularCard(id); window.salvarPrecLocal(); };
+window.atualizarLucroPrec = function(id, v) { getPrecPeca(id).lucro = parseFloat(v)||0; window.recalcularCard(id); window.salvarPrecLocal(); };
 </script>
 </body>
 </html>
