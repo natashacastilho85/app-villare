@@ -383,25 +383,25 @@
 
 /* --- AJUSTE GLOBAL PC (VILLARE ATELIER) --- */
 @media (min-width: 1024px) {
-  /* Mantém as telas centralizadas e com largura controlada */
   .screen {
-    position: relative;
     display: none;
     padding: 2rem;
-    max-width: 1200px; /* Limita a largura para as colunas não ficarem muito longe */
-    margin: 0 auto !important; /* Centraliza o conteúdo na tela do PC */
+    max-width: 1400px; /* Limita a largura total para as colunas ficarem próximas */
+    margin: 0 auto !important; /* Centraliza o conteúdo no monitor */
+    position: relative;
   }
 
   .screen.active {
     display: block !important;
   }
 
-  /* Força a grade de 3 colunas em todas as listas principais */
+  /* FORÇA 3 COLUNAS NAS LISTAS PRINCIPAIS */
+  /* Adicionei o #calendario-list que é o que aparece no seu print */
   .metrics-grid, 
   #contratos-list, 
   #gastos-list, 
   #prec-body,
-  #calendario-list,
+  #calendario-list, 
   #catalogo-list,
   #proximos-list,
   #financeiro-list {
@@ -409,9 +409,10 @@
     grid-template-columns: repeat(3, 1fr) !important;
     gap: 1.5rem !important;
     align-items: start !important;
+    width: 100% !important;
   }
 
-  /* Itens que devem ocupar a largura total (Títulos e Resumos) */
+  /* ITENS QUE DEVEM OCUPAR A LARGURA TODA */
   .section-title, 
   .fin-totais, 
   #prec-resumo-container,
@@ -421,10 +422,11 @@
     grid-column: 1 / -1 !important;
   }
 
-  /* Garante que o menu inferior não cubra o conteúdo final */
+  /* Mantém o menu inferior fixo e acessível */
   .bottom-nav {
     z-index: 999 !important;
     position: fixed;
+    max-width: 100%;
   }
 }
 </style>
