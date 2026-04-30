@@ -3508,7 +3508,66 @@ function salvarMaterialGlobal() {
   // Fecha o drawer de novo material — drawer-materiais (lista) fica aberto atrás
   closeDrawer('drawer-mat-novo');
 }
+async function salvarMaterialGlobal() {
+  const nome = document.getElementById('mat-nome').value.trim();
+  const unidade = document.getElementById('mat-unidade').value;
+  const qtdTotal = parseFloat(document.getElementById('mat-qtd-total').value);
+  const valorPago = parseFloat(document.getElementById('mat-valor').value);
 
+  if (!nome) { alert('Informe o nome do material.'); return; }
+  if (!qtdTotal || qtdTotal <= 0) { alert('Informe a quantidade total comprada.'); return; }
+  if (!valorPago || valorPago <= 0) { alert('Informe o valor pago.'); return; }
+
+  let materialIdAtualizado = null;
+
+  if (matEditandoId) {
+    const m = matGlobais.find(x => x.id === matEditandoId);
+    if (m) { 
+      m.nome = nome; 
+      m.unidade = unidade; 
+      m.qtdTotal = qtdTotal; 
+      m.valorPago = valorPago; 
+      materialIdAtualizado = m.id;
+    }
+  } else {
+    const novoId = Date.now();
+    matGlobais.push({ id: novoId, nome, unidade, qtdTotal, valorPago });
+    materialIdAtualizado = novoId;
+  }
+
+  // 1. Salva a lista de materiais no banco
+  await salvarMatGlobais();
+  
+  // 2. ATUALIZAÇÃO AUTOMÁTICA: Varre todas as peças para atualizar custos
+  pecas.forEach(p => {
+    const d = getPrecPeca(p.id);
+    let houveMudancaNaPeca = false;
+
+    d.materiais.forEach(m => {
+      if (m.matGlobalId === materialIdAtualizado) {
+        // Recalcula o custo proporcional deste item na peça
+        m.valor = (valorPago / qtdTotal) * (m.qtdUsada || 0);
+        houveMudancaNaPeca = true;
+      }
+    });
+
+    if (houveMudancaNaPeca) {
+      // Se o custo do material mudou, manda o card da peça recalcular tudo (Lucro, Pix, etc)
+      if (typeof recalcularCard === 'function') recalcularCard(p.id);
+    }
+  });
+
+  // 3. Salva os novos cálculos das peças no banco para não perder nada
+  if (typeof salvarPrecLocal === 'function') {
+    await salvarPrecLocal();
+  }
+
+  // 4. Atualiza o visual
+  renderMatGlobais();
+  if (typeof _renderPrecBody === 'function') _renderPrecBody();
+  
+  closeDrawer('drawer-mat-novo');
+}
 function excluirMaterialGlobal() {
   if (!matEditandoId) return;
   const m = matGlobais.find(x => x.id === matEditandoId);
