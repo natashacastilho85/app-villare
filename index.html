@@ -983,41 +983,39 @@
     <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(184,134,42,0.2);">
   <div style="font-family:'Calibri',serif; font-size: 1.1rem; color: var(--brown); margin-bottom: 1rem;">Dados da Ficha de Produção</div>
   
-  <div class="field-group"><label class="field-label">Nome da Noiva</label><input type="text" id="c-f-noiva" class="field-input"></div>
-  <div class="field-group"><label class="field-label">Nome do Noivo</label><input type="text" id="c-f-noivo" class="field-input"></div>
-  <div class="field-group"><label class="field-label">Instagram</label><input type="text" id="c-f-insta" class="field-input"></div>
-  
-  <!-- Campo adicionado aqui -->
-  <div class="field-group"><label class="field-label">Quem fez o buquê?</label><input type="text" id="c-f-buque" class="field-input"></div>
+  <div class="field-group"><label class="field-label">Nome da Noiva</label><input type="text" id="e-f-noiva" class="field-input"></div>
+  <div class="field-group"><label class="field-label">Nome do Noivo</label><input type="text" id="e-f-noivo" class="field-input"></div>
+  <div class="field-group"><label class="field-label">Instagram</label><input type="text" id="e-f-insta" class="field-input"></div>
+  <div class="field-group"><label class="field-label">Quem fez o buquê?</label><input type="text" id="e-f-buque" class="field-input"></div>
 
   <div style="display:flex; gap:0.5rem">
-    <div class="field-group" style="flex:1"><label class="field-label">Cerimonialista</label><input type="text" id="c-f-cerimonial" class="field-input"></div>
-    <div class="field-group" style="flex:1"><label class="field-label">Quem indicou?</label><input type="text" id="c-f-indicacao" class="field-input"></div>
+    <div class="field-group" style="flex:1"><label class="field-label">Cerimonialista</label><input type="text" id="e-f-cerimonial" class="field-input"></div>
+    <div class="field-group" style="flex:1"><label class="field-label">Quem indicou?</label><input type="text" id="e-f-indicacao" class="field-input"></div>
   </div>
 
   <div style="display:flex; gap:0.5rem">
     <div class="field-group" style="flex:1">
       <label class="field-label">Iniciais/Data?</label>
-      <select id="c-f-iniciais" class="field-input"><option>Não</option><option>Sim</option></select>
+      <select id="e-f-iniciais" class="field-input"><option>Não</option><option>Sim</option></select>
     </div>
     <div class="field-group" style="flex:1">
       <label class="field-label">Espelho?</label>
-      <select id="c-f-espelho" class="field-input"><option>Não</option><option>Sim</option></select>
+      <select id="e-f-espelho" class="field-input"><option>Não</option><option>Sim</option></select>
     </div>
   </div>
   
-  <div class="field-group" style="margin-top: 1rem;">
+  <div class="field-group" style="margin-top: 1rem; margin-bottom: 2rem;">
     <label class="field-label">Observações Gerais da Produção</label>
-    <textarea id="c-f-obs-geral" class="field-input" rows="3" placeholder="Flores, cores, detalhes do fundo..."></textarea>
+    <textarea id="e-f-obs-geral" class="field-input" rows="4" placeholder="Flores, cores, detalhes do fundo..."></textarea>
   </div>
+  
+  <div style="height: 50px;"></div>
 </div>
 
-    <button type="button" class="btn-primary" style="background:rgba(107,143,113,0.1); color:var(--sage); border:1px solid rgba(107,143,113,0.3); margin-top: 0.5rem; margin-bottom: 1.5rem;" onclick="imprimirFichaPeloForm('e')">🖨️ Imprimir Ficha Agora</button>
-    <button class="btn-primary" onclick="saveEditContrato()">Salvar alterações</button>
-    <button class="btn-secondary" onclick="fecharEditContrato()">Cancelar</button>
-    <button onclick="excluirContrato()" style="width:100%;background:transparent;border:1px solid rgba(122,37,53,0.3);border-radius:4px;padding:0.75rem;color:var(--bordeaux);font-family:'Calibri',sans-serif;font-size:0.75rem;cursor:pointer;margin-top:0.4rem">Excluir contrato</button>
-  </div>
-</div>
+<button type="button" class="btn-primary" style="background:rgba(107,143,113,0.1); color:var(--sage); border:1px solid rgba(107,143,113,0.3); margin-top: 0.5rem;" onclick="imprimirFichaPeloForm('e')">🖨️ Imprimir Ficha Agora</button>
+<button class="btn-primary" onclick="saveEditContrato()">Salvar alterações</button>
+<button class="btn-secondary" onclick="fecharEditContrato()">Cancelar</button>
+<button onclick="excluirContrato()" style="width:100%;background:transparent;border:1px solid rgba(122,37,53,0.3);border-radius:4px;padding:0.75rem;color:var(--bordeaux);font-family:'Calibri',sans-serif;font-size:0.75rem;cursor:pointer;margin-top:0.4rem">Excluir contrato</button>
 
 <!-- DRAWER NOVO PAGAMENTO -->
 <div class="drawer-overlay" id="drawer-pag" onclick="closeDrawer('drawer-pag')">
