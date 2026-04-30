@@ -4551,6 +4551,126 @@ window.salvarCustos = function() {
     alert("Erro ao salvar! Detalhe: " + erro.message);
   }
 };
+  // --- CORREÇÃO BLINDADA: MATERIAIS, TABELA E SALVAMENTO ---
+
+// 1. Atualizar a quantidade de um material global
+window.atualizarQtdMatPrec = function(pecaId, idx, val) {
+  const d = getPrecPeca(pecaId);
+  const m = d.materiais[idx];
+  if (!m || !m.matGlobalId) return;
+  
+  const matG = typeof matGlobais !== 'undefined' ? matGlobais.find(x => x.id === m.matGlobalId) : null;
+  if (!matG) return;
+  
+  const qtd = parseFloat(val) || 0;
+  const qtdTotal = parseFloat(matG.qtdTotal) || 0;
+  const valorPago = parseFloat(matG.valorPago) || 0;
+  m.qtdUsada = qtd;
+  
+  const custo = qtdTotal > 0 ? (qtd / qtdTotal) * valorPago : 0;
+  m.valor = parseFloat(custo.toFixed(2));
+  m.nome = matG.nome;
+  
+  const elCusto = document.getElementById('prec-mat-custo-' + pecaId + '-' + idx);
+  if (elCusto) elCusto.textContent = m.valor > 0 ? 'R$ ' + m.valor.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
+  
+  window.recalcularCard(pecaId); // Atualiza os números e a tabela de resumo
+  
+  const card = document.getElementById('prec-card-' + pecaId);
+  if (card) {
+    const simulInput = card.querySelector('.prec-simul-input');
+    if (simulInput && simulInput.value) window.simularLucro(pecaId, simulInput.value);
+  }
+  
+  window.salvarPrecLocal(); // <-- GARANTE QUE SALVA NO BANCO DE DADOS
+  if (typeof renderCatalogo === 'function') renderCatalogo();
+};
+
+// 2. Atualizar um material manual
+window.atualizarMatPrec = function(pecaId, idx, val) {
+  const d = getPrecPeca(pecaId);
+  d.materiais[idx].valor = parseFloat(val) || 0;
+  
+  window.recalcularCard(pecaId);
+  window.salvarPrecLocal(); // <-- GARANTE QUE SALVA NO BANCO DE DADOS
+  if (typeof renderCatalogo === 'function') renderCatalogo();
+};
+
+// 3. Remover um material
+window.removerMatPrec = function(pecaId, idx) {
+  const d = getPrecPeca(pecaId);
+  d.materiais.splice(idx, 1); // Remove da lista
+  
+  const cardIdx = pecas.findIndex(x => x.id === pecaId);
+  const p = pecas.find(x => x.id === pecaId);
+  const card = document.getElementById('prec-card-' + pecaId);
+  
+  if (card && p) {
+    card.outerHTML = window.renderPrecCard(p, d, getValorHora(), getCustoFixoPorHora(), cardIdx);
+  }
+  
+  window.recalcularCard(pecaId); // Atualiza os números e a tabela de resumo
+  window.salvarPrecLocal(); // <-- GARANTE QUE SALVA NO BANCO DE DADOS
+  if (typeof renderCatalogo === 'function') renderCatalogo();
+};
+
+// 4. Confirmar adição de material do banco
+window.confirmarAddMaterial = function() {
+  if (!matModalSelId || !matModalPecaId) return;
+  const m = matGlobais.find(x => x.id === matModalSelId);
+  if (!m) return;
+  
+  const qtdUsada = parseFloat(document.getElementById('modal-mat-qtd').value);
+  if (!qtdUsada || qtdUsada <= 0) { alert('Informe a quantidade usada.'); return; }
+  
+  const qtdTotal = parseFloat(m.qtdTotal) || 0;
+  const valorPago = parseFloat(m.valorPago) || 0;
+  const custo = qtdTotal > 0 ? (qtdUsada / qtdTotal) * valorPago : 0;
+
+  const d = getPrecPeca(matModalPecaId);
+  d.materiais.push({
+    nome: m.nome,
+    valor: parseFloat(custo.toFixed(2)),
+    matGlobalId: m.id,
+    qtdUsada
+  });
+
+  const cardIdx = pecas.findIndex(x => x.id === matModalPecaId);
+  const p = pecas.find(x => x.id === matModalPecaId);
+  const card = document.getElementById('prec-card-' + matModalPecaId);
+  
+  if (card && p) {
+    card.outerHTML = window.renderPrecCard(p, d, getValorHora(), getCustoFixoPorHora(), cardIdx);
+  }
+  
+  window.recalcularCard(matModalPecaId); // Atualiza os números e a tabela de resumo
+  window.salvarPrecLocal(); // <-- GARANTE QUE SALVA NO BANCO DE DADOS
+  if (typeof renderCatalogo === 'function') renderCatalogo();
+  closeModalSelMat();
+};
+
+// 5. Confirmar adição de material manual
+window.addMaterialManual = function() {
+  const nome = document.getElementById('modal-mat-manual-nome').value.trim();
+  const valor = parseFloat(document.getElementById('modal-mat-manual-valor').value);
+  if (!nome) { alert('Informe o nome do material.'); return; }
+
+  const d = getPrecPeca(matModalPecaId);
+  d.materiais.push({ nome, valor: valor || 0 });
+
+  const cardIdx = pecas.findIndex(x => x.id === matModalPecaId);
+  const p = pecas.find(x => x.id === matModalPecaId);
+  const card = document.getElementById('prec-card-' + matModalPecaId);
+  
+  if (card && p) {
+    card.outerHTML = window.renderPrecCard(p, d, getValorHora(), getCustoFixoPorHora(), cardIdx);
+  }
+  
+  window.recalcularCard(matModalPecaId); // Atualiza os números e a tabela de resumo
+  window.salvarPrecLocal(); // <-- GARANTE QUE SALVA NO BANCO DE DADOS
+  if (typeof renderCatalogo === 'function') renderCatalogo();
+  closeModalSelMat();
+};
 </script>
 </body>
 </html>
