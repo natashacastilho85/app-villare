@@ -1985,6 +1985,9 @@ function openPecaDePrec() {
 }
 
 function openMatGlobais() {
+  // Organiza a lista de A a Z antes de renderizar
+  matGlobais.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
+  
   renderMatGlobais();
   openDrawer('drawer-materiais');
 }
