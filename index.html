@@ -1784,7 +1784,6 @@ function contratoCardHTML(c) {
   const devedor = isDevedor(c);
 
   let diasBadge = '';
-  let diasBadge = '';
   if (c.chegada && !['Concluído', 'Enviado'].includes(status)) {
     const chegada = new Date(c.chegada+'T12:00:00');
     const diasPassados = Math.floor((hoje - chegada)/(1000*60*60*24));
