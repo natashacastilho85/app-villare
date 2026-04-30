@@ -427,18 +427,27 @@
   /* 3. GRIDS INTERNAS (AS LISTAS QUE VOCÊ QUER EM 3 COLUNAS) */
   
   /* ---> Tabela de Preços */
+  /* AJUSTE PARA A TABELA DE PREÇOS (ORDEM POR COLUNA NO PC) */
   .prec-resumo-card {
-    display: grid !important;
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 0.5rem 2rem !important;
+    display: block !important; /* Desativa o grid anterior */
+    column-count: 3 !important; /* Cria 3 colunas verticais */
+    column-gap: 2rem !important; /* Espaço entre as colunas */
     padding: 1.5rem !important;
   }
+
   .prec-resumo-header {
-    grid-column: 1 / -1 !important; /* Título da tabela ocupa a linha inteira */
-    margin-bottom: 1rem;
+    column-span: all !important; /* O título ignora as colunas e fica no topo */
+    margin-bottom: 1.5rem;
+    font-weight: 600;
   }
+
   .prec-resumo-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    break-inside: avoid !important; /* Impede que uma linha "quebre" no meio entre duas colunas */
     border-bottom: 1px solid rgba(184,134,42,0.1) !important;
+    padding: 0.6rem 0 !important;
+    margin-bottom: 0.2rem;
   }
 
   /* ---> Buquês em Produção (Tela Inicial) */
