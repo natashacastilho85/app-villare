@@ -380,6 +380,40 @@
   .ctab-td-val.zero { color:var(--muted-light); }
   .ctab-td-total { font-family:'Calibri',serif; font-size:1.05rem; color:var(--brown); padding:0.65rem 0.9rem; text-align:center; white-space:nowrap; }
   .ctab-td-total-label { font-size:0.6rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); padding:0.65rem 0.8rem; position:sticky; left:0; background:white; white-space:nowrap; }
+
+/* Ajuste para telas grandes (Computadores) */
+@media (min-width: 1024px) {
+  #prec-body {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Cria 3 colunas iguais */
+    gap: 1.5rem; /* Espaço entre os cards */
+    align-items: start;
+    padding: 1rem;
+  }
+
+  .prec-peca-card {
+    margin-bottom: 0 !important; /* Remove a margem de baixo já que o grid cuida do espaço */
+    height: 100%; /* Faz todos os cards da mesma linha terem a mesma altura visual */
+  }
+  
+  /* Ajusta o resumo para não ficar esticado demais no topo */
+  #prec-resumo-container {
+    grid-column: 1 / -1; /* Faz a tabela de resumo ocupar as 3 colunas (largura total) */
+    margin-bottom: 1rem;
+  }
+}
+
+/* Ajuste intermediário (Tablets ou telas menores) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  #prec-body {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2 cards lado a lado em tablets */
+    gap: 1rem;
+  }
+  #prec-resumo-container {
+    grid-column: 1 / -1;
+  }
+}
 </style>
 </head>
 <body>
