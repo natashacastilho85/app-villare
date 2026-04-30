@@ -508,16 +508,7 @@
       <div id="proximos-list" style="margin-bottom:1.2rem"></div>
 
       <div class="section-title">Buquês em produção</div>
-      <!-- Buquês em produção -->
-      <div class="producao-card">
-        <div class="producao-header">
-          <div>
-            <div class="producao-label">Em andamento</div>
-          </div>
-          <div class="producao-count" id="producao-count">0</div>
-        </div>
-        <div id="producao-list"></div>
-      </div>
+      <div id="producao-list" style="margin-bottom:1.2rem"></div>
 
       <!-- Botão de limpeza de dados (usar uma vez e pode ignorar depois) -->
       <div style="margin-top:2rem;text-align:center">
@@ -1658,25 +1649,17 @@ function onFormaPagChange(val) {
 
 // ── PRODUÇÃO (dashboard) ──
 function renderProducao() {
-  const em = contratos.filter(c=>statusEfetivo(c)==='Produção');
-  document.getElementById('producao-count').textContent = em.length;
+  const em = contratos.filter(c => statusEfetivo(c) === 'Produção');
+  const lista = document.getElementById('producao-list');
+  
   if (!em.length) {
-    document.getElementById('producao-list').innerHTML = `<div class="cal-empty">Nenhum buquê em produção</div>`;
+    // Mensagem de vazio centralizada (ocupa as 3 colunas)
+    lista.innerHTML = `<div style="text-align:center;padding:1.2rem;color:var(--muted);font-style:italic;font-family:'Calibri',serif;font-size:0.85rem;grid-column:1/-1">Nenhum buquê em produção</div>`;
     return;
   }
-  document.getElementById('producao-list').innerHTML = em.map(c=>{
-    const chegada = new Date(c.chegada+'T12:00:00');
-    const dias = Math.floor((hoje-chegada)/(1000*60*60*24));
-    const restam = 120-dias;
-    const cor = restam<=15?'var(--bordeaux)':restam<=30?'var(--gold)':'var(--sage)';
-    return `<div class="producao-row">
-      <div>
-        <div class="producao-nome">${c.nome}</div>
-        <div class="producao-meta">${c.pecas.map(p=>`${p.qtd>1?p.qtd+'× ':''}${p.nome}`).join(' + ')}</div>
-      </div>
-      <span class="producao-status" style="background:rgba(0,0,0,0.04);border:1px solid ${cor};color:${cor}">${dias}d · ${restam>0?restam+' restam':'prazo!'}</span>
-    </div>`;
-  }).join('');
+  
+  // Agora usa o mesmo formato de card dos "Próximos Casamentos"
+  lista.innerHTML = em.map(c => contratoCardHTML(c)).join('');
 }
 
 // ── DEVEDORES ──
