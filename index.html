@@ -1457,28 +1457,37 @@ function renderAll() {
 
 // ── MÉTRICAS DO DASHBOARD ──
 function renderMetricas() {
-  const ano = '2026';
-  const mesAtual = String(hoje.getMonth()+1).padStart(2,'0');
-  const ctrsAtivos = contratos.filter(c=>c.status!=='Cancelado');
+  try {
+    const ano = '2026';
+    const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
+    const ctrsAtivos = contratos.filter(c => c && c.status !== 'Cancelado');
 
-  // Faturamento do mês atual (contratos assinados no mês)
-  const fat = ctrsAtivos.filter(c=>c.contrato.startsWith(ano+'-'+mesAtual)).reduce((s,c)=>s+c.valorBruto,0);
-  const nMes = ctrsAtivos.filter(c=>c.contrato.startsWith(ano+'-'+mesAtual)).length;
+    // Faturamento do mês atual - Blindado contra datas vazias
+    const fat = ctrsAtivos
+      .filter(c => c.contrato && typeof c.contrato === 'string' && c.contrato.startsWith(ano + '-' + mesAtual))
+      .reduce((s, c) => s + (parseFloat(c.valorBruto) || 0), 0);
 
-  // A receber: saldo em aberto de todos os contratos ativos
-  const aReceber = ctrsAtivos.reduce((s,c)=>s+(c.valorBruto - totalPago(c)),0);
+    const nMes = ctrsAtivos.filter(c => c.contrato && typeof c.contrato === 'string' && c.contrato.startsWith(ano + '-' + mesAtual)).length;
 
-  const elFat = document.getElementById('metric-faturamento');
-  const elCtrs = document.getElementById('metric-contratos-mes');
-  const elRec = document.getElementById('metric-areceber');
-  if (elFat) elFat.textContent = fat>0?'R$ '+fat.toLocaleString('pt-BR',{minimumFractionDigits:0}):'R$ —';
-  if (elCtrs) elCtrs.textContent = nMes+' contrato'+(nMes===1?'':'s');
-  if (elRec) {
-    elRec.textContent = aReceber > 0 ? 'R$ '+aReceber.toLocaleString('pt-BR',{minimumFractionDigits:0}) : '—';
-    elRec.classList.remove('small');
+    // A receber - Blindado contra erros de cálculo
+    const aReceber = ctrsAtivos.reduce((s, c) => {
+      const bruto = parseFloat(c.valorBruto) || 0;
+      return s + (bruto - totalPago(c));
+    }, 0);
+
+    const elFat = document.getElementById('metric-faturamento');
+    const elCtrs = document.getElementById('metric-contratos-mes');
+    const elRec = document.getElementById('metric-areceber');
+
+    if (elFat) elFat.textContent = fat > 0 ? 'R$ ' + fat.toLocaleString('pt-BR', { minimumFractionDigits: 0 }) : 'R$ 0';
+    if (elCtrs) elCtrs.textContent = nMes + ' contrato' + (nMes === 1 ? '' : 's');
+    if (elRec) elRec.textContent = aReceber > 0 ? 'R$ ' + aReceber.toLocaleString('pt-BR', { minimumFractionDigits: 0 }) : 'R$ 0';
+    
+    const elSub = document.getElementById('metric-areceber-sub');
+    if (elSub) elSub.style.display = aReceber > 0 ? '' : 'none';
+  } catch (err) {
+    console.error("Erro fatal na renderização do dashboard:", err);
   }
-  const elSub = document.getElementById('metric-areceber-sub');
-  if (elSub) elSub.style.display = aReceber > 0 ? '' : 'none';
 }
 
 // ── NAV ──
