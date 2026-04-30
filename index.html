@@ -4844,24 +4844,6 @@ window.renderPrecCard = function(p, d, valorHora, custoFixoHora, cardIdx) {
   </div>`;
 };
 
-// Força o salvamento correto dos dados da ficha na edição
-const originalSaveEditContrato = window.saveEditContrato;
-window.saveEditContrato = async function() {
-  const f = {
-    nomeNoiva: document.getElementById('e-f-noiva').value,
-    nomeNoivo: document.getElementById('e-f-noivo').value,
-    instagram: document.getElementById('e-f-insta').value,
-    quemFezBuque: document.getElementById('e-f-buque').value,
-    cerimonialista: document.getElementById('e-f-cerimonial').value,
-    quemIndicou: document.getElementById('e-f-indicacao').value,
-    iniciaisData: document.getElementById('e-f-iniciais').value,
-    espelhoPresente: document.getElementById('e-f-espelho').value,
-    obsGeral: document.getElementById('e-f-obs-geral').value
-  };
-  window._fichaEditadaManual = f; // Garante que a variável global receba os dados
-  originalSaveEditContrato();
-};
-  
 </script>
 </body>
 </html>
