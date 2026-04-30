@@ -395,7 +395,7 @@
     display: block !important;
   }
 
-  /* 1. AS LISTAS QUE DEVEM VIRAR 3 COLUNAS */
+  /* 1. GRIDS PRINCIPAIS DA TELA (3 COLUNAS) */
   .metrics-grid, 
   #contratos-list, 
   #gastos-list, 
@@ -403,9 +403,7 @@
   #calendario-list, 
   #catalogo-list,
   #proximos-list,
-  #financeiro-list,
-  #producao-list,      /* Lista interna de buquês */
-  .prec-resumo-card {  /* A tabela de preços em si */
+  #financeiro-list {
     display: grid !important;
     grid-template-columns: repeat(3, 1fr) !important;
     gap: 1.5rem !important;
@@ -413,28 +411,49 @@
     width: 100% !important;
   }
 
-  /* 2. SÓ OS TÍTULOS E FILTROS FICAM LARGOS */
+  /* 2. CONTAINERS QUE PRECISAM OCUPAR A TELA TODA (LARGURA TOTAL) */
+  /* Isso corrige o erro: devolve a largura total para a Tabela e os Buquês */
   .section-title, 
   .fin-totais, 
   #devedores-section,
-  .filter-row {
+  .filter-row,
+  #prec-resumo-container, /* Devolve a Tabela de Preços para o topo, larga */
+  .producao-card          /* Devolve o quadro de buquês para a largura total */
+  {
     grid-column: 1 / -1 !important;
     width: 100% !important;
   }
 
-  /* 3. AJUSTE DA TABELA DE PREÇOS PARA NÃO ESTICAR */
+  /* 3. GRIDS INTERNAS (AS LISTAS QUE VOCÊ QUER EM 3 COLUNAS) */
+  
+  /* ---> Tabela de Preços */
+  .prec-resumo-card {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0.5rem 2rem !important;
+    padding: 1.5rem !important;
+  }
   .prec-resumo-header {
-    grid-column: 1 / -1 !important; /* Título da tabela ocupa as 3 colunas */
+    grid-column: 1 / -1 !important; /* Título da tabela ocupa a linha inteira */
     margin-bottom: 1rem;
   }
-
   .prec-resumo-row {
-    display: flex !important;
-    justify-content: space-between !important;
     border-bottom: 1px solid rgba(184,134,42,0.1) !important;
-    padding: 0.5rem !important;
   }
 
+  /* ---> Buquês em Produção (Tela Inicial) */
+  #producao-list {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 1rem !important;
+  }
+  #producao-list .producao-row {
+    border: 1px solid rgba(184,134,42,0.15) !important;
+    border-radius: 8px;
+    padding: 1rem !important;
+  }
+
+  /* 4. MENU INFERIOR */
   .bottom-nav {
     z-index: 999 !important;
     position: fixed;
