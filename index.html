@@ -1784,40 +1784,35 @@ function contratoCardHTML(c) {
   const devedor = isDevedor(c);
 
   let diasBadge = '';
-  // Mostra a badge apenas se o buquê chegou e ainda não foi enviado/concluído
-  if (c.chegada && !['Concluído', 'Enviado'].includes(statusEfetivo(c))) {
+  if (c.chegada && !['Concluído', 'Enviado'].includes(status)) {
     const chegada = new Date(c.chegada+'T12:00:00');
     const diasPassados = Math.floor((hoje - chegada)/(1000*60*60*24));
     
-    // Busca o prazo dinâmico que você configurou (padrão 120)
+    // Puxa o prazo que você configurou nos custos
     const prazoConfigurado = custosConfig.prazoProducao || 120;
     const restam = prazoConfigurado - diasPassados;
     
-    // As cores acompanham a urgência baseada no prazo
     const cor = restam <= 15 ? 'var(--bordeaux)' : restam <= 30 ? 'var(--gold)' : 'var(--sage)';
-    
-    // Monta o texto mostrando os dois: os dias passados e os que restam (ou se atrasou)
-    const textoBadge = restam < 0 ? `${diasPassados}d passados (Atrasado!)` : `${diasPassados}d passados · restam ${restam}`;
+    const textoBadge = restam < 0 ? `${diasPassados}d · Atrasado!` : `${diasPassados}d passados · restam ${restam}`;
     
     diasBadge = `<span style="font-size:0.55rem;letter-spacing:0.06em;padding:0.22rem 0.55rem;border-radius:20px;font-weight:600;white-space:nowrap;background:rgba(0,0,0,0.04);border:1px solid ${cor};color:${cor}">${textoBadge}</span>`;
   }
 
-  const cardStyle = devedor
-    ? 'background:rgba(122,37,53,0.08);border:1px solid rgba(122,37,53,0.4);'
-    : '';
-  const devedorBadge = devedor
-    ? `<span style="font-size:0.55rem;letter-spacing:0.08em;padding:0.22rem 0.55rem;border-radius:20px;font-weight:600;white-space:nowrap;background:var(--bordeaux);color:white;text-transform:uppercase">⚠ Devedor</span>`
-    : '';
+  const cardStyle = devedor ? 'background:rgba(122,37,53,0.08);border:1px solid rgba(122,37,53,0.4);' : '';
+  const devedorBadge = devedor ? `<span style="font-size:0.55rem;letter-spacing:0.08em;padding:0.22rem 0.55rem;border-radius:20px;font-weight:600;white-space:nowrap;background:var(--bordeaux);color:white;text-transform:uppercase">⚠ Devedor</span>` : '';
 
   return `<div class="contract-card" style="${cardStyle}" onclick="openDetail(${c.id})">
-    <div class="contract-card-header">
-      <div class="contract-name">${c.nome}</div>
-      <div style="display:flex;gap:0.4rem;align-items:center;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">
-        ${devedorBadge}
-        ${diasBadge}
-        <div class="status-badge s-${status}">${status}</div>
-      </div>
+    
+    <!-- 1ª LINHA: ETIQUETAS (Status, Devedor, Prazo) -->
+    <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap; margin-bottom:0.6rem;">
+      <div class="status-badge s-${status}">${status}</div>
+      ${devedorBadge}
+      ${diasBadge}
     </div>
+    
+    <!-- 2ª LINHA: NOME DA NOIVA DESTACADO -->
+    <div class="contract-name" style="margin-bottom: 0.6rem; font-size: 1.25rem;">${c.nome}</div>
+    
     <div class="contract-meta"><span>💍 ${d}/${m}/${y}</span><span>${c.envio==='Correios'?'📦':'🤝'} ${c.envio}${c.estado?' · '+c.estado:''}</span></div>
     <div class="payment-progress"><div class="payment-bar" style="width:${pct}%"></div></div>
     <div class="contract-footer">
@@ -2839,7 +2834,7 @@ function openCustos() {
   document.getElementById('c-dias-mes').value = custosConfig.diasPorMes || '';
   document.getElementById('c-tarifa-cartao').value = custosConfig.tarifaCartao || '';
   
-  // Puxa o prazo configurado (se não tiver, usa 120 por padrão)
+  // CARREGA O PRAZO SALVO (Se não tiver nada salvo, usa 120 por padrão)
   document.getElementById('c-prazo-producao').value = custosConfig.prazoProducao || 120;
   
   renderItensFixos();
@@ -2854,16 +2849,14 @@ function salvarCustos() {
   custosConfig.diasPorMes = parseFloat(document.getElementById('c-dias-mes').value) || 0;
   custosConfig.tarifaCartao = parseFloat(document.getElementById('c-tarifa-cartao').value) || 6.99;
   
-  // Salva o novo prazo
+  // GRAVA O NOVO PRAZO
   custosConfig.prazoProducao = parseInt(document.getElementById('c-prazo-producao').value) || 120;
   
   localStorage.setItem(CUSTOS_KEY, JSON.stringify(custosConfig));
 
   closeDrawer('drawer-custos');
   _renderPrecBody();
-  
-  // Atualiza as telas na mesma hora para as badges de prazo mudarem
-  renderAll(); 
+  renderAll(); // Atualiza a tela para os cards puxarem o prazo novo na mesma hora
 }
 
 function renderProcessosPeca(pecaId, d) {
