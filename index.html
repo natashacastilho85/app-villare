@@ -386,8 +386,8 @@
   .screen {
     display: none;
     padding: 2rem;
-    max-width: 1400px; /* Limita a largura total para as colunas ficarem próximas */
-    margin: 0 auto !important; /* Centraliza o conteúdo no monitor */
+    max-width: 1400px; 
+    margin: 0 auto !important; 
     position: relative;
   }
 
@@ -395,8 +395,7 @@
     display: block !important;
   }
 
-  /* FORÇA 3 COLUNAS NAS LISTAS PRINCIPAIS */
-  /* Adicionei o #calendario-list que é o que aparece no seu print */
+  /* FORÇA 3 COLUNAS EM TODAS AS LISTAS E GRIDS */
   .metrics-grid, 
   #contratos-list, 
   #gastos-list, 
@@ -404,7 +403,10 @@
   #calendario-list, 
   #catalogo-list,
   #proximos-list,
-  #financeiro-list {
+  #financeiro-list,
+  #producao-list, /* NOVO: Alinha buquês em produção na Home */
+  #pecas-selecionadas, /* NOVO: Alinha as peças nos formulários */
+  #e-pecas-selecionadas {
     display: grid !important;
     grid-template-columns: repeat(3, 1fr) !important;
     gap: 1.5rem !important;
@@ -412,7 +414,21 @@
     width: 100% !important;
   }
 
-  /* ITENS QUE DEVEM OCUPAR A LARGURA TODA */
+  /* AJUSTE PARA A LISTA DE PEÇAS NA PRECIFICAÇÃO (PRINT 102148) */
+  /* Como essa lista usa uma estrutura de linhas simples, vamos forçar a grid nela também */
+  .prec-resumo-card {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0.5rem 2rem !important;
+    padding: 1.5rem !important;
+  }
+
+  .prec-resumo-header {
+    grid-column: 1 / -1 !important;
+    margin-bottom: 1rem;
+  }
+
+  /* ITENS DE LARGURA TOTAL */
   .section-title, 
   .fin-totais, 
   #prec-resumo-container,
@@ -422,11 +438,9 @@
     grid-column: 1 / -1 !important;
   }
 
-  /* Mantém o menu inferior fixo e acessível */
   .bottom-nav {
     z-index: 999 !important;
     position: fixed;
-    max-width: 100%;
   }
 }
 </style>
