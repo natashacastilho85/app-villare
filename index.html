@@ -395,8 +395,7 @@
     display: block !important;
   }
 
-  /* FORÇA 3 COLUNAS EM TODAS AS LISTAS E GRIDS */
-  /* Adicionado seletores específicos para os itens internos não esticarem */
+  /* 1. AS LISTAS QUE DEVEM VIRAR 3 COLUNAS */
   .metrics-grid, 
   #contratos-list, 
   #gastos-list, 
@@ -405,9 +404,8 @@
   #catalogo-list,
   #proximos-list,
   #financeiro-list,
-  #producao-list,
-  #pecas-selecionadas,
-  #e-pecas-selecionadas {
+  #producao-list,      /* Lista interna de buquês */
+  .prec-resumo-card {  /* A tabela de preços em si */
     display: grid !important;
     grid-template-columns: repeat(3, 1fr) !important;
     gap: 1.5rem !important;
@@ -415,41 +413,26 @@
     width: 100% !important;
   }
 
-  /* CORREÇÃO ESPECÍFICA PARA OS BUQUÊS EM PRODUÇÃO E PEÇAS */
-  /* Isso impede que o conteúdo interno force o card a ocupar a linha toda */
-  .producao-row, .piece-card, .contract-card, .gasto-month-card, .cal-month-card {
+  /* 2. SÓ OS TÍTULOS E FILTROS FICAM LARGOS */
+  .section-title, 
+  .fin-totais, 
+  #devedores-section,
+  .filter-row {
+    grid-column: 1 / -1 !important;
     width: 100% !important;
-    max-width: 100% !important;
   }
 
-  /* AJUSTE PARA A TABELA DE PREÇOS (PRECIFICAÇÃO) */
-  /* Transforma a lista vertical em uma grade de 3 colunas compactas */
-  .prec-resumo-card {
-    display: block !important;
-    grid-column: 1 / -1 !important;
-  }
-  
-  #prec-resumo-container .prec-resumo-card {
-    display: grid !important;
-    grid-template-columns: repeat(3, 1fr) !important;
-    gap: 0.5rem 2rem !important;
-    padding: 1.5rem !important;
-  }
-
+  /* 3. AJUSTE DA TABELA DE PREÇOS PARA NÃO ESTICAR */
   .prec-resumo-header {
-    grid-column: 1 / -1 !important;
+    grid-column: 1 / -1 !important; /* Título da tabela ocupa as 3 colunas */
     margin-bottom: 1rem;
   }
 
-  /* SEÇÕES QUE DEVEM CONTINUAR LARGAS (TÍTULOS E TOTAIS) */
-  .section-title, 
-  .fin-totais, 
-  #prec-resumo-container,
-  #devedores-section,
-  .filter-row,
-  .producao-card {
-    grid-column: 1 / -1 !important;
-    width: 100% !important;
+  .prec-resumo-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    border-bottom: 1px solid rgba(184,134,42,0.1) !important;
+    padding: 0.5rem !important;
   }
 
   .bottom-nav {
