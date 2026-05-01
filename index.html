@@ -547,27 +547,20 @@
     align-items: start !important;
   }
 }
-/* --- AJUSTE VISUAL RESPONSIVO (VILLARE) --- */
+/* --- ESTILO DOS CAMPOS DE AJUSTE (VILLARE) --- */
 .prec-ajustes-topo {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 colunas no computador */
-    gap: 12px;
-    padding: 15px;
+    display: flex;
+    gap: 8px;
+    padding: 12px;
     background: #fdfdfd;
     border-bottom: 1px solid #eee;
+    justify-content: space-between;
 }
-
-@media (max-width: 600px) {
-    .prec-ajustes-topo {
-        grid-template-columns: 1fr; /* 1 coluna no celular para não esmagar */
-    }
-}
-
 .ajuste-item {
     display: flex;
     flex-direction: column;
+    flex: 1;
 }
-
 .ajuste-item label {
     font-size: 0.65rem;
     color: #888;
@@ -575,15 +568,15 @@
     margin-bottom: 4px;
     font-weight: bold;
 }
-
 .ajuste-item input {
     border: 1px solid #ddd;
     border-radius: 6px;
-    padding: 8px;
-    font-size: 0.95rem;
-    color: #5d4037;
+    padding: 6px;
+    font-size: 0.9rem;
+    color: #5d4037; /* Marrom Villare */
     background: white;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+    width: 100%;
+    box-sizing: border-box;
 }
 </style>
 </head>
@@ -3371,18 +3364,6 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
         </div>`;
       }
     }
-
-window.atualizarCampoPeca = function(pecaId, campo, valor) {
-  const p = pecas.find(x => x.id === pecaId);
-  if (!p) return;
-  const d = getPrecPeca(pecaId);
-  d[campo] = parseFloat(valor) || 0;
-  
-  // Se mudar o lucro ou perda, salva e atualiza a tela
-  if (typeof salvarPrecPeca === 'function') salvarPrecPeca(pecaId, d);
-  if (typeof _renderPrecBody === 'function') _renderPrecBody();
-};
-    
     // Material manual / fixo: só campo de R$
     return `
       <div class="prec-mat-row" id="prec-mat-${p.id}-${i}">
