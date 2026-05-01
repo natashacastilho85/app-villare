@@ -3171,18 +3171,6 @@ function atualizarPreviewCustos() {
   } else if (resumo) { resumo.innerHTML = ''; }
 }
 
-function salvarCustos() {
-  custosConfig.salarioMensal = parseFloat(document.getElementById('c-salario-mensal').value) || 0;
-  custosConfig.horasPorDia = parseFloat(document.getElementById('c-horas-dia').value) || 0;
-  custosConfig.diasPorMes = parseFloat(document.getElementById('c-dias-mes').value) || 0;
-  custosConfig.tarifaCartao = parseFloat(document.getElementById('c-tarifa-cartao').value) || 6.99;
-  // processos já estão em custosConfig.processos via oninput
-  localStorage.setItem(CUSTOS_KEY, JSON.stringify(custosConfig));
-
-  closeDrawer('drawer-custos');
-  _renderPrecBody();
-}
-
 // Renderiza/atualiza o conteúdo do drawer-prec (chamado também após cadastrar peça nova)
 function _renderPrecBody() {
   const valorHora     = getValorHora();
@@ -4271,26 +4259,6 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-window.calcPrec = function(materiais, lucro, salario, custoFixoHora) {
-  const custoMat = materiais.reduce((s, m) => s + (parseFloat(m.valor) || 0), 0);
-  const custoTotalReal = custoMat + salario + custoFixoHora;
-  const margem = (parseFloat(lucro) || 0) / 100;
-  const divisor = 1 - margem;
-  const precoBase = divisor > 0 ? custoTotalReal / divisor : custoTotalReal;
-  const valorLucro = precoBase - custoTotalReal;
-  const tarifa = (typeof custosConfig !== 'undefined') ? (custosConfig.tarifaCartao / 100) : 0.0701;
-  const precoCartao = precoBase / (1 - tarifa);
-  const f7 = v => v > 0 ? (Math.floor(v / 10) * 10 + 7) : 0;
-  return { custoMat, custoTotalReal, valorLucro, precoBase: f7(precoBase), precoCartao: f7(precoCartao) };
-};
-
-window.toggleSecaoVisivel = function(id, setaId) {
-  const c = document.getElementById(id); const s = document.getElementById(setaId);
-  if (c && s) { c.classList.toggle('aberto'); s.textContent = c.classList.contains('aberto') ? '▲' : '▼'; }
-};
-
-// LIGA O MOTOR DO APP
-initApp();
 window.addEventListener('load', () => setTimeout(verificarNotificacoes, 2000));
   
 </script>
