@@ -881,11 +881,6 @@
 </div>
 <!-- FIM DO BLOCO DA FICHA -->
     
-    <div class="field-group" style="margin-top: 1rem; margin-bottom: 2rem;">
-        <label class="field-label">Observações Gerais da Produção</label>
-        <textarea id="c-f-obs-geral" class="field-input" rows="4" placeholder="Flores, cores, detalhes do fundo..."></textarea>
-    </div>
-    
     <div style="height: 50px;"></div>
 
     <button type="button" class="btn-primary" style="background:rgba(107,143,113,0.1); color:var(--sage); border:1px solid rgba(107,143,113,0.3); margin-top: 0.5rem;" onclick="imprimirFichaPeloForm('c')">🖨️ Imprimir Ficha Agora</button>
@@ -1706,9 +1701,9 @@ async function saveContrato() {
     const p = pecas.find(x=>x.id===pid);
     if (!p) return;
     const qtd = parseInt(qtdEl.value) || 1;
-    const r = getPrecPeca(pid);
-    pecasSel.push({ nome: p.nome, valor: r.precoCartao, qtd });
-    valorBruto += r.precoCartao * qtd;
+    const precoCalculado = getPrecoPecaCalculado(pid) || 0;
+    pecasSel.push({ nome: p.nome, valor: precoCalculado, qtd });
+    valorBruto += precoCalculado * qtd;
   });
 
   // Coleta os dados da ficha com os IDs sincronizados
@@ -1747,8 +1742,8 @@ function gerarPagamentosIniciais(forma, valor) {
   } else if (forma === '4x') {
     return [{ data: hoje, valor: valor, forma: 'Cartão', parcelas: 4, status: 'Realizado' }];
   } else if (forma === 'reserva') {
-    const pagoEntrada = parseFloat(document.getElementById('c-pago').value) || 0;
-    return [{ data: hoje, valor: pagoEntrada, forma: 'Pix', status: 'Realizado' }];
+    const pagoEntrada = round2(parseFloat(document.getElementById('c-pago').value) || 0);
+    return [{ data: hoje, valor: pagoEntrada, bruto: pagoEntrada, forma: 'Pix', status: 'Realizado' }];
   } else if (forma === 'misto') {
     const pPix = parseFloat(document.getElementById('c-pago-pix').value) || 0;
     const pCartao = parseFloat(document.getElementById('c-pago-cartao').value) || 0;
@@ -2679,9 +2674,9 @@ async function saveEditContrato() {
     const p = pecas.find(x=>x.id===pid);
     if (!p) return;
     const qtd = parseInt(qtdEl.value) || 1;
-    const r = getPrecPeca(pid);
-    pecasSel.push({ nome: p.nome, valor: r.precoCartao, qtd });
-    valorBruto += r.precoCartao * qtd;
+    const precoCalculado = getPrecoPecaCalculado(pid) || 0;
+    pecasSel.push({ nome: p.nome, valor: precoCalculado, qtd });
+    valorBruto += precoCalculado * qtd;
   });
   dados.pecas = pecasSel;
   dados.valor_bruto = Math.max(0, valorBruto - dados.desconto);
@@ -4164,17 +4159,24 @@ async function salvarEImprimirFicha() {
       const sel = linha.querySelector('select');
       const qtdEl = linha.querySelector('input[type=number]');
       if (sel && sel.selectedIndex !== -1) {
+        const pid = parseInt(sel.value);
+        const qtd = parseInt(qtdEl ? qtdEl.value : 1) || 1;
+        const preco = getPrecoPecaCalculado(pid) || 0;
         contratoFake.pecas.push({
           nome: sel.options[sel.selectedIndex].text.split(' — ')[0],
-          qtd: qtdEl ? qtdEl.value : 1
+          qtd, valor: preco
         });
+        contratoFake.valorBruto += preco * qtd;
       }
     });
+    const descFicha = parseFloat(document.getElementById(prefixo + '-desconto')?.value) || 0;
+    contratoFake.valorBruto = Math.max(0, contratoFake.valorBruto - descFicha);
 
     const fichaFake = {
       nomeNoiva: document.getElementById(prefixo + '-f-noiva')?.value || '',
       nomeNoivo: document.getElementById(prefixo + '-f-noivo')?.value || '',
       instagram: document.getElementById(prefixo + '-f-insta')?.value || '',
+      quemFezBuque: document.getElementById(prefixo + '-f-buque')?.value || '',
       cerimonialista: document.getElementById(prefixo + '-f-cerimonial')?.value || '',
       quemIndicou: document.getElementById(prefixo + '-f-indicacao')?.value || '',
       iniciaisData: document.getElementById(prefixo + '-f-iniciais')?.value || 'Não',
