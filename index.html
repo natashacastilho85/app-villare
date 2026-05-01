@@ -3327,11 +3327,18 @@ document.addEventListener('click', (e) => {
   }
 });
 
+// NOVO renderPrecCard — estrutura:
+// 1. Header: nome + botões (duplicar, excluir, checkbox catálogo)
+// 2. Materiais colapsável
+// 3. Processos colapsável
+// 4. Campos Tempo / Margem / Perda (antes do resumo)
+// 5. Resumo financeiro completo (como no celular)
+// 6. Simulador
+
 function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
   const mins    = d.tempo || getTotalProcessosMins() || 60;
   const salario = valorHora * (mins / 60);
   const custoFixo = custoFixoHora * (mins / 60);
-  // Aplica perda de resina: soma custo extra sobre materiais com "resina" no nome
   const perdaResina = (d.perdaResina ?? 5) / 100;
   const materiaisComPerda = d.materiais.map(m => {
     if ((m.nome || '').toLowerCase().includes('resina') && perdaResina > 0) {
@@ -3343,69 +3350,89 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
   const fmtR = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2});
 
   let matRows = d.materiais.map((m, i) => {
-    // Material vinculado a um cadastrado: mostra qtd editável + custo calculado
     if (m.matGlobalId) {
       const matG = matGlobais.find(x => x.id === m.matGlobalId);
       if (matG) {
         const qtdAtual = m.qtdUsada || 0;
-        const unidade = matG.unidade;
         return `
         <div class="prec-mat-row prec-mat-row-qtd" id="prec-mat-${p.id}-${i}">
           <span class="prec-mat-nome">${matG.nome}</span>
           <div class="prec-mat-qtd-wrap">
             <input class="prec-mat-qtd-input" type="number" step="0.01" min="0"
-              value="${qtdAtual > 0 ? qtdAtual : ''}"
-              placeholder="0"
+              value="${qtdAtual > 0 ? qtdAtual : ''}" placeholder="0"
               oninput="atualizarQtdMatPrec(${p.id}, ${i}, this.value)">
-            <span class="prec-mat-unit">${unidade}</span>
+            <span class="prec-mat-unit">${matG.unidade}</span>
           </div>
           <span class="prec-mat-custo-calc" id="prec-mat-custo-${p.id}-${i}">${m.valor > 0 ? fmtR(m.valor) : '—'}</span>
           <button class="prec-mat-del" onclick="removerMatPrec(${p.id}, ${i})" title="Remover">×</button>
         </div>`;
       }
     }
-    // Material manual / fixo: só campo de R$
     return `
       <div class="prec-mat-row" id="prec-mat-${p.id}-${i}">
         <span class="prec-mat-nome">${m.nome}</span>
         <input class="prec-mat-input" type="number" step="0.01" min="0"
-          value="${m.valor > 0 ? m.valor.toFixed(2) : ''}"
-          placeholder="R$"
+          value="${m.valor > 0 ? m.valor.toFixed(2) : ''}" placeholder="R$"
           oninput="atualizarMatPrec(${p.id}, ${i}, this.value)">
         <button class="prec-mat-del" onclick="removerMatPrec(${p.id}, ${i})" title="Remover">×</button>
       </div>`;
   }).join('');
 
-  const lucroVal = r.precoBase > 0 ? ((r.precoBase - r.custoTotalReal) / r.precoBase * 100).toFixed(1) : '0.0';
+  const procs = custosConfig.processos || [];
+  let procRows = '';
+  if (procs.length) {
+    if (!d.processosMins) d.processosMins = procs.map(p => p.mins || 0);
+    while (d.processosMins.length < procs.length) d.processosMins.push(0);
+    procRows = procs.map((proc, i) => {
+      const val = d.processosMins[i] ?? proc.mins ?? 0;
+      return `<div class="prec-proc-row">
+        <span class="prec-proc-nome">${proc.nome || 'Processo ' + (i+1)}</span>
+        <input class="prec-proc-input" type="number" min="0" step="1"
+          value="${val > 0 ? val : ''}" placeholder="0"
+          oninput="atualizarProcessoPeca(${p.id}, ${i}, this.value)">
+        <span class="prec-proc-unit">min</span>
+      </div>`;
+    }).join('');
+  }
 
   return `<div class="prec-peca-card${cardIdx % 2 === 1 ? ' par' : ''}" id="prec-card-${p.id}">
-    <div class="prec-peca-header" style="display: flex; align-items: center; justify-content: space-between; padding: 0.8rem 1rem; background: rgba(184,134,42,0.05); border-bottom: 1px solid rgba(184,134,42,0.12);">
-      <span class="prec-peca-nome" onclick="openPeca(${p.id})" style="cursor:pointer; font-family:'Calibri',serif; font-size:1.1rem; color:var(--dark);" title="Editar nome">
-        ${p.nome} ✏️
-      </span>
-      
-      <div style="display:flex; gap:1rem; align-items:center;">
-        <button onclick="duplicarPecaPrec(${p.id})" title="Duplicar peça" 
-                style="background:none; border:none; font-size:1.1rem; cursor:pointer; padding:0;">
-                📋
-        </button>
-        
-        <button onclick="excluirPecaPrec(${p.id})" title="Excluir peça" 
-                style="background:none; border:none; font-size:1.1rem; cursor:pointer; padding:0;">
-                🗑️
-        </button>
-        
-        <label style="display:flex; align-items:center; gap:0.3rem; font-size:0.65rem; color:var(--muted); cursor:pointer; border-left: 1px solid rgba(184,134,42,0.2); padding-left: 0.8rem; margin-left: 0.2rem;">
+
+    <!-- HEADER: nome + ações -->
+    <div class="prec-peca-header">
+      <span class="prec-peca-nome" onclick="openPeca(${p.id})" style="cursor:pointer" title="Editar nome">${p.nome} ✏️</span>
+      <div style="display:flex;align-items:center;gap:0.5rem">
+        <button onclick="duplicarPecaPrec(${p.id})" title="Duplicar" style="background:none;border:none;color:var(--brown);font-size:1rem;cursor:pointer;padding:0.2rem">📋</button>
+        <button onclick="excluirPecaPrec(${p.id})" title="Excluir" style="background:none;border:none;color:var(--bordeaux);font-size:1rem;cursor:pointer;padding:0.2rem">🗑️</button>
+        <label style="display:flex;align-items:center;gap:0.25rem;font-size:0.65rem;color:var(--muted);cursor:pointer;border-left:1px solid rgba(184,134,42,0.2);padding-left:0.6rem;white-space:nowrap">
           <input type="checkbox" ${d.exibirCatalogo !== false ? 'checked' : ''}
             onchange="toggleExibirCatalogo(${p.id}, this.checked)"
-            style="accent-color:var(--gold); width:13px; height:13px; cursor:pointer;">
+            style="accent-color:var(--brown);width:13px;height:13px;cursor:pointer">
           Catálogo
         </label>
       </div>
     </div>
-    ${matRows}
-    <button class="prec-add-btn" onclick="adicionarMatPrec(${p.id})">＋ Adicionar material</button>
-    <div class="prec-lucro-row" style="flex-wrap:wrap;gap:0.4rem 0.8rem">
+
+    <!-- MATERIAIS colapsável -->
+    <div class="materiais-toggle" onclick="toggleSecaoPrec('mat-${p.id}', 'seta-mat-${p.id}')">
+      <span>Materiais</span>
+      <span id="seta-mat-${p.id}">▼</span>
+    </div>
+    <div class="materiais-content aberto" id="mat-${p.id}">
+      ${matRows}
+      <button class="prec-add-btn" onclick="adicionarMatPrec(${p.id})">＋ Adicionar material</button>
+    </div>
+
+    <!-- PROCESSOS colapsável -->
+    <div class="materiais-toggle" onclick="toggleSecaoPrec('proc-${p.id}', 'seta-proc-${p.id}')">
+      <span>Processos</span>
+      <span id="seta-proc-${p.id}">▼</span>
+    </div>
+    <div class="materiais-content aberto" id="proc-${p.id}">
+      ${procRows || '<div class="cal-empty" style="padding:0.5rem 1rem">Nenhum processo configurado em ⚙️ Custos</div>'}
+    </div>
+
+    <!-- CAMPOS: Tempo / Margem / Perda -->
+    <div class="prec-lucro-row" style="flex-wrap:wrap;gap:0.4rem 0.8rem;border-top:1px solid rgba(107,143,113,0.15)">
       <label>Tempo (min)</label>
       <input class="prec-lucro-input" type="number" min="1" step="1"
         value="${mins}" id="prec-tempo-${p.id}"
@@ -3419,6 +3446,8 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
         value="${d.perdaResina ?? 5}"
         oninput="atualizarPerdaResina(${p.id}, this.value)">
     </div>
+
+    <!-- RESUMO FINANCEIRO -->
     <div class="prec-resultado">
       <div class="prec-res-row"><span class="lbl">Custo materiais</span><span class="val">${fmtR(r.custoMat)}</span></div>
       <div class="prec-res-row"><span class="lbl">Salário (mão de obra)</span><span class="val">${fmtR(salario)}</span></div>
@@ -3433,19 +3462,17 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
         <span class="val" style="font-size:1.3rem;color:var(--brown)">${fmtR(r.precoCartao)}</span>
       </div>
     </div>
+
+    <!-- SIMULADOR -->
     <div class="prec-simul">
       <label>Simular: se vender por R$</label>
       <div class="prec-simul-row">
-        <input class="prec-simul-input" type="number" step="1" placeholder="ex: 1200" oninput="simularLucro(${p.id}, this.value)">
+        <input class="prec-simul-input" type="number" step="1" placeholder="ex: 1200"
+          oninput="simularLucro(${p.id}, this.value)">
         <span class="prec-simul-result" id="prec-simul-res-${p.id}">← digite o valor</span>
       </div>
     </div>
-    
-    <div style="text-align: center; margin-top: 1rem; padding-top: 0.6rem; border-top: 1px dashed rgba(184,134,42,0.2);">
-      <button onclick="document.querySelector('#drawer-prec .drawer').scrollTo({top: 0, behavior: 'smooth'})" style="background: none; border: none; color: var(--brown); font-size: 0.72rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;">
-        ↑ Voltar ao topo
-      </button>
-    </div>
+
   </div>`;
 }
 
@@ -3643,6 +3670,14 @@ function toggleExibirCatalogo(pecaId, exibir) {
     const drawerAposRender = document.querySelector('#drawer-prec .drawer');
     if (drawerAposRender) drawerAposRender.scrollTop = scrollPos;
   }
+}
+
+function toggleSecaoPrec(secaoId, setaId) {
+  const el = document.getElementById(secaoId);
+  const seta = document.getElementById(setaId);
+  if (!el) return;
+  el.classList.toggle('aberto');
+  if (seta) seta.textContent = el.classList.contains('aberto') ? '▼' : '▶';
 }
   
 function simularLucro(pecaId, valorVenda, custoIgnorado) {
@@ -4260,119 +4295,9 @@ window.calcPrec = function(materiais, lucro, salario, custoFixoHora) {
   return { custoMat, custoTotalReal, valorLucro, precoBase: f7(precoBase), precoCartao: f7(precoCartao) };
 };
 
-window.renderPrecCard = function(p, d, valorHora, custoFixoHora, cardIdx) {
-  // 1. Definição de valores base
-  const lucroVar = d.lucro !== undefined ? d.lucro : 100;
-  const perdaResinaVar = d.perdaResina !== undefined ? d.perdaResina : 5;
-  
-  // 2. LÓGICA DOS PROCESSOS: Se a peça não tem processos, usa os globais de 'custosPessoais'
-  let listaProcessos = [];
-  if (d.processos && d.processos.length > 0) {
-    listaProcessos = d.processos;
-  } else if (typeof custosPessoais !== 'undefined' && custosPessoais.processos) {
-    listaProcessos = custosPessoais.processos.map(pp => ({ nome: pp.nome, tempo: pp.tempo }));
-  }
-
-  // Calcula o tempo total baseado na lista de processos encontrada
-  const tempoTotalCalculado = listaProcessos.reduce((acc, cur) => acc + (parseFloat(cur.tempo) || 0), 0);
-  const mins = d.tempo !== undefined ? d.tempo : tempoTotalCalculado;
-
-  const salario = valorHora * (mins / 60);
-  const custoFixo = custoFixoHora * (mins / 60);
-  const perdaResinaDecimal = perdaResinaVar / 100;
-
-  const materiaisComPerda = (d.materiais || []).map(m => {
-    if ((m.nome || '').toLowerCase().includes('resina') && perdaResinaDecimal > 0) {
-      return { ...m, valor: (parseFloat(m.valor) || 0) * (1 + perdaResinaDecimal) };
-    }
-    return m;
-  });
-
-  const r = window.calcPrec(materiaisComPerda, lucroVar, salario, custoFixo);
-  const fmtR = v => 'R$ ' + (parseFloat(v)||0).toLocaleString('pt-BR', {minimumFractionDigits:2});
-  const isPC = window.innerWidth >= 1024;
-
-  // Renderização das linhas de Materiais
-  let matRows = (d.materiais || []).map((m, i) => {
-    if (m.matGlobalId) {
-      const matG = (typeof matGlobais !== 'undefined') ? matGlobais.find(x => x.id === m.matGlobalId) : null;
-      if (matG) {
-        return `<div class="prec-mat-row prec-mat-row-qtd"><span class="prec-mat-nome">${matG.nome}</span><div class="prec-mat-qtd-wrap"><input class="prec-mat-qtd-input" type="number" step="0.01" value="${m.qtdUsada || ''}" oninput="atualizarQtdMatPrec(${p.id}, ${i}, this.value)"><span class="prec-mat-unit">${matG.unidade}</span></div><span class="prec-mat-custo-calc">${m.valor > 0 ? fmtR(m.valor) : '—'}</span></div>`;
-      }
-    }
-    return `<div class="prec-mat-row"><span class="prec-mat-nome">${m.nome}</span><input class="prec-mat-input" type="number" value="${m.valor > 0 ? m.valor.toFixed(2) : ''}" oninput="atualizarMatPrec(${p.id}, ${i}, this.value)"></div>`;
-  }).join('');
-
-  // Renderização das linhas de Processos
-  let procRows = listaProcessos.map((proc, i) => {
-    return `<div class="prec-mat-row">
-      <span class="prec-mat-nome">${proc.nome || 'Processo'}</span>
-      <div class="prec-mat-qtd-wrap">
-        <input class="prec-mat-qtd-input" type="number" value="${proc.tempo || 0}" oninput="atualizarTempoProcPrec(${p.id}, ${i}, this.value)">
-        <span class="prec-mat-unit">min</span>
-      </div>
-    </div>`;
-  }).join('');
-
-  return `<div class="prec-peca-card ${cardIdx % 2 === 1 ? 'par' : ''}" id="prec-card-${p.id}">
-    <div class="prec-peca-header">
-      <span class="prec-peca-nome" onclick="openPeca(${p.id})">${p.nome} ✏️</span>
-    </div>
-
-    <div class="prec-ajustes-topo">
-       <div class="ajuste-item">
-         <label>Tempo (min)</label>
-         <input type="number" value="${mins}" oninput="atualizarCampoPeca(${p.id}, 'tempo', this.value)">
-       </div>
-       <div class="ajuste-item">
-         <label>Lucro (%)</label>
-         <input type="number" value="${lucroVar}" oninput="atualizarCampoPeca(${p.id}, 'lucro', this.value)">
-       </div>
-       <div class="ajuste-item">
-         <label>Perda (%)</label>
-         <input type="number" value="${perdaResinaVar}" oninput="atualizarCampoPeca(${p.id}, 'perdaResina', this.value)">
-       </div>
-    </div>
-    
-    <div class="materiais-toggle" style="${isPC ? 'display:none' : ''}" onclick="toggleSecaoVisivel('list-mat-${p.id}', 'seta-mat-${p.id}')">
-      <span>Materiais</span><span id="seta-mat-${p.id}">▼</span>
-    </div>
-    <div class="materiais-content ${isPC ? 'aberto' : ''}" id="list-mat-${p.id}">
-      ${matRows}
-      <button class="prec-add-btn" onclick="adicionarMatPrec(${p.id})">＋ Material</button>
-    </div>
-
-    <div class="materiais-toggle" style="border-top: 1px solid var(--border); ${isPC ? 'display:none' : ''}" onclick="toggleSecaoVisivel('list-proc-${p.id}', 'seta-proc-${p.id}')">
-      <span>Processos</span><span id="seta-proc-${p.id}">▼</span>
-    </div>
-    <div class="materiais-content ${isPC ? 'aberto' : ''}" id="list-proc-${p.id}">
-      ${procRows}
-      <button class="prec-add-btn" onclick="adicionarProcPrec(${p.id})">＋ Processo</button>
-    </div>
-
-    <div class="prec-resultado">
-      <div class="prec-res-row"><span class="lbl">Custo Total</span><span class="val">${fmtR(r.custoTotalReal)}</span></div>
-      <div class="prec-res-row"><span class="lbl" style="color:var(--sage)">Lucro</span><span class="val" style="color:var(--sage)">${fmtR(r.valorLucro)}</span></div>
-      <div class="prec-res-total"><span class="lbl">PIX</span><span class="val">${fmtR(r.precoBase)}</span></div>
-      <div class="prec-res-total"><span class="lbl" style="color:var(--brown)">CARTÃO</span><span class="val" style="font-size:1.3rem; color:var(--brown)">${fmtR(r.precoCartao)}</span></div>
-    </div>
-  </div>`;
-};
-
 window.toggleSecaoVisivel = function(id, setaId) {
   const c = document.getElementById(id); const s = document.getElementById(setaId);
   if (c && s) { c.classList.toggle('aberto'); s.textContent = c.classList.contains('aberto') ? '▲' : '▼'; }
-};
-
-window._renderPrecBody = function() {
-  const vHora = typeof getValorHora === 'function' ? getValorHora() : 0;
-  const cfHora = typeof getCustoFixoPorHora === 'function' ? getCustoFixoPorHora() : 0;
-  pecas.sort((a, b) => a.nome.localeCompare(b.nome));
-  const el = document.getElementById('prec-body'); if (!el) return;
-  let html = '<div id="prec-resumo-container"></div>';
-  pecas.forEach((p, idx) => { html += window.renderPrecCard(p, getPrecPeca(p.id), vHora, cfHora, idx); });
-  el.innerHTML = html;
-  if (typeof atualizarTabelaResumo === 'function') atualizarTabelaResumo();
 };
 
 // LIGA O MOTOR DO APP
