@@ -547,6 +547,37 @@
     align-items: start !important;
   }
 }
+/* --- ESTILO DOS CAMPOS DE AJUSTE (VILLARE) --- */
+.prec-ajustes-topo {
+    display: flex;
+    gap: 8px;
+    padding: 12px;
+    background: #fdfdfd;
+    border-bottom: 1px solid #eee;
+    justify-content: space-between;
+}
+.ajuste-item {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+.ajuste-item label {
+    font-size: 0.65rem;
+    color: #888;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    font-weight: bold;
+}
+.ajuste-item input {
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 6px;
+    font-size: 0.9rem;
+    color: #5d4037; /* Marrom Villare */
+    background: white;
+    width: 100%;
+    box-sizing: border-box;
+}
 </style>
 </head>
 <body>
@@ -4230,11 +4261,22 @@ window.calcPrec = function(materiais, lucro, salario, custoFixoHora) {
 };
 
 window.renderPrecCard = function(p, d, valorHora, custoFixoHora, cardIdx) {
-  // Garantir que os valores existam para o cálculo
-  const mins = d.tempo || 0;
+  // 1. Definição de valores base
   const lucroVar = d.lucro !== undefined ? d.lucro : 100;
   const perdaResinaVar = d.perdaResina !== undefined ? d.perdaResina : 5;
   
+  // 2. LÓGICA DOS PROCESSOS: Se a peça não tem processos, usa os globais de 'custosPessoais'
+  let listaProcessos = [];
+  if (d.processos && d.processos.length > 0) {
+    listaProcessos = d.processos;
+  } else if (typeof custosPessoais !== 'undefined' && custosPessoais.processos) {
+    listaProcessos = custosPessoais.processos.map(pp => ({ nome: pp.nome, tempo: pp.tempo }));
+  }
+
+  // Calcula o tempo total baseado na lista de processos encontrada
+  const tempoTotalCalculado = listaProcessos.reduce((acc, cur) => acc + (parseFloat(cur.tempo) || 0), 0);
+  const mins = d.tempo !== undefined ? d.tempo : tempoTotalCalculado;
+
   const salario = valorHora * (mins / 60);
   const custoFixo = custoFixoHora * (mins / 60);
   const perdaResinaDecimal = perdaResinaVar / 100;
@@ -4250,7 +4292,7 @@ window.renderPrecCard = function(p, d, valorHora, custoFixoHora, cardIdx) {
   const fmtR = v => 'R$ ' + (parseFloat(v)||0).toLocaleString('pt-BR', {minimumFractionDigits:2});
   const isPC = window.innerWidth >= 1024;
 
-  // 1. Linhas de Materiais
+  // Renderização das linhas de Materiais
   let matRows = (d.materiais || []).map((m, i) => {
     if (m.matGlobalId) {
       const matG = (typeof matGlobais !== 'undefined') ? matGlobais.find(x => x.id === m.matGlobalId) : null;
@@ -4261,8 +4303,8 @@ window.renderPrecCard = function(p, d, valorHora, custoFixoHora, cardIdx) {
     return `<div class="prec-mat-row"><span class="prec-mat-nome">${m.nome}</span><input class="prec-mat-input" type="number" value="${m.valor > 0 ? m.valor.toFixed(2) : ''}" oninput="atualizarMatPrec(${p.id}, ${i}, this.value)"></div>`;
   }).join('');
 
-  // 2. Linhas de Processos (Editáveis)
-  let procRows = (d.processos || []).map((proc, i) => {
+  // Renderização das linhas de Processos
+  let procRows = listaProcessos.map((proc, i) => {
     return `<div class="prec-mat-row">
       <span class="prec-mat-nome">${proc.nome || 'Processo'}</span>
       <div class="prec-mat-qtd-wrap">
@@ -4279,7 +4321,7 @@ window.renderPrecCard = function(p, d, valorHora, custoFixoHora, cardIdx) {
 
     <div class="prec-ajustes-topo">
        <div class="ajuste-item">
-         <label>Tempo Total (min)</label>
+         <label>Tempo (min)</label>
          <input type="number" value="${mins}" oninput="atualizarCampoPeca(${p.id}, 'tempo', this.value)">
        </div>
        <div class="ajuste-item">
@@ -4287,7 +4329,7 @@ window.renderPrecCard = function(p, d, valorHora, custoFixoHora, cardIdx) {
          <input type="number" value="${lucroVar}" oninput="atualizarCampoPeca(${p.id}, 'lucro', this.value)">
        </div>
        <div class="ajuste-item">
-         <label>Perda Resina (%)</label>
+         <label>Perda (%)</label>
          <input type="number" value="${perdaResinaVar}" oninput="atualizarCampoPeca(${p.id}, 'perdaResina', this.value)">
        </div>
     </div>
@@ -4316,7 +4358,6 @@ window.renderPrecCard = function(p, d, valorHora, custoFixoHora, cardIdx) {
     </div>
   </div>`;
 };
-
 
 window.toggleSecaoVisivel = function(id, setaId) {
   const c = document.getElementById(id); const s = document.getElementById(setaId);
