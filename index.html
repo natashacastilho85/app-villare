@@ -582,6 +582,36 @@
         flex-shrink: 0;
     }
 }
+/* --- ESTILO PARA TODOS (COMPUTADOR) --- */
+.piece-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border-bottom: 1px solid rgba(184,134,42,0.1);
+}
+.piece-values {
+    display: flex;
+    gap: 15px; /* Lado a lado no computador */
+    align-items: center;
+}
+.val-pix { font-size: 0.85rem; color: #888; }
+.val-cartao { font-weight: bold; color: var(--brown); }
+
+/* --- APENAS PARA CELULAR (A MÁGICA) --- */
+@media (max-width: 600px) {
+    .piece-card {
+        padding: 12px 10px;
+    }
+    .piece-values {
+        flex-direction: column; /* Empilha no celular */
+        align-items: flex-end;
+        gap: 2px;
+    }
+    .val-pix { font-size: 0.65rem; }
+    .val-cartao { font-size: 0.95rem; }
+}
+  
 </style>
 </head>
 <body>
@@ -2197,56 +2227,31 @@ async function excluirGasto() {
   } catch(e) { alert('Erro ao excluir gasto: '+e.message); }
 }
 
-// ── CATÁLOGO VILLARE ATELIER (VERSÃO BLINDADA) ──
 function renderCatalogo() {
   const pecasCatalogo = [...pecas]
     .filter(p => getPrecPeca(p.id).exibirCatalogo !== false)
-    .sort((a, b) => {
-      const pa = getPrecoPecaCalculado(a.id) || 0;
-      const pb = getPrecoPecaCalculado(b.id) || 0;
-      return pa - pb;
-    });
+    .sort((a, b) => (getPrecoPecaCalculado(a.id) || 0) - (getPrecoPecaCalculado(b.id) || 0));
 
   const html = pecasCatalogo.length ? pecasCatalogo.map(p => {
     const precoCartao = getPrecoPecaCalculado(p.id) || 0;
-    
-    // Regra do Ateliê: 7% de desconto no PIX
     const precoPix = precoCartao * 0.93; 
-    
-    // Formatação cravada em 2 casas decimais
-    const fmtR = v => 'R$ ' + (parseFloat(v)||0).toLocaleString('pt-BR', {
-      minimumFractionDigits: 2, 
-      maximumFractionDigits: 2
-    });
+    const fmtR = v => 'R$ ' + (parseFloat(v)||0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
     return `
-    <div class="piece-card" onclick="openPeca(${p.id})" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid rgba(184,134,42,0.1); cursor: pointer;">
-      
-      <!-- Lado Esquerdo: Identificação da Peça -->
-      <div style="flex: 1; padding-right: 15px;">
-        <div class="piece-name" style="font-weight: 600; color: var(--brown); font-size: 0.95rem; line-height: 1.2;">
-          ${p.nome}
-        </div>
-        ${p.desc ? `<div style="font-size: 0.65rem; color: var(--muted); margin-top: 2px; line-height: 1.1;">${p.desc}</div>` : ''}
+    <div class="piece-card" onclick="openPeca(${p.id})">
+      <div class="piece-info">
+        <div class="piece-name">${p.nome}</div>
+        ${p.desc ? `<div class="piece-desc">${p.desc}</div>` : ''}
       </div>
-      
-      <!-- Lado Direito: Valores Empilhados (Blindado) -->
-      <div style="display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; min-width: 85px;">
-        <span style="font-size: 0.65rem; color: #8a8a8a; line-height: 1; margin-bottom: 3px; white-space: nowrap;">
-          Pix ${fmtR(precoPix)}
-        </span>
-        <span style="font-size: 1rem; font-weight: bold; color: var(--brown); line-height: 1; white-space: nowrap;">
-          ${fmtR(precoCartao)}
-        </span>
+      <div class="piece-values">
+        <span class="val-pix">Pix ${fmtR(precoPix)}</span>
+        <span class="val-cartao">${fmtR(precoCartao)}</span>
       </div>
-
     </div>`;
-  }).join('') : `<div class="cal-empty" style="padding: 20px; text-align: center; color: var(--muted);">Nenhuma peça cadastrada</div>`;
+  }).join('') : '<div class="cal-empty">Nenhuma peça cadastrada</div>';
 
-  // Atualiza as listas tanto na tela principal quanto no Drawer (Menu lateral)
   const scr = document.getElementById('catalogo-list');
   const drw = document.getElementById('catalogo-drawer-list');
-  
   if (scr) scr.innerHTML = html;
   if (drw) drw.innerHTML = html;
 }
