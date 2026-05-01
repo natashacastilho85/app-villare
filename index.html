@@ -3382,9 +3382,9 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
     <!-- MATERIAIS colapsável -->
     <div class="materiais-toggle" onclick="toggleSecaoPrec('mat-${p.id}', 'seta-mat-${p.id}')">
       <span>Materiais</span>
-      <span id="seta-mat-${p.id}">▼</span>
+      <span id="seta-mat-${p.id}">▶</span>
     </div>
-    <div class="materiais-content aberto" id="mat-${p.id}">
+    <div class="materiais-content" id="mat-${p.id}">
       ${matRows}
       <button class="prec-add-btn" onclick="adicionarMatPrec(${p.id})">＋ Adicionar material</button>
     </div>
@@ -3392,9 +3392,9 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
     <!-- PROCESSOS colapsável -->
     <div class="materiais-toggle" onclick="toggleSecaoPrec('proc-${p.id}', 'seta-proc-${p.id}')">
       <span>Processos</span>
-      <span id="seta-proc-${p.id}">▼</span>
+      <span id="seta-proc-${p.id}">▶</span>
     </div>
-    <div class="materiais-content aberto" id="proc-${p.id}">
+    <div class="materiais-content" id="proc-${p.id}">
       ${procRows || '<div class="cal-empty" style="padding:0.5rem 1rem">Nenhum processo configurado em ⚙️ Custos</div>'}
     </div>
 
@@ -3438,6 +3438,13 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
           oninput="simularLucro(${p.id}, this.value)">
         <span class="prec-simul-result" id="prec-simul-res-${p.id}">← digite o valor</span>
       </div>
+    </div>
+
+    <!-- BOTÃO SUBIR AO TOPO -->
+    <div style="text-align:center;padding:0.6rem 1rem 0.8rem">
+      <button onclick="(function(){const d=document.querySelector('#drawer-prec .drawer');if(d)d.scrollTo({top:0,behavior:'smooth'});})()" style="background:none;border:1px solid rgba(184,134,42,0.25);border-radius:20px;padding:0.35rem 1rem;font-size:0.68rem;color:var(--muted);cursor:pointer;letter-spacing:0.08em;font-family:'Calibri',sans-serif">
+        ↑ subir ao topo
+      </button>
     </div>
 
   </div>`;
