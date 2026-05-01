@@ -3195,20 +3195,9 @@ pecas.sort((a, b) => a.nome.localeCompare(b.nome));
     return;
   }
 
-  // Busca rápida no topo: digita parte do nome → rola até a peça
-  let html = `<div class="prec-busca-wrap">
-    <div class="prec-busca-inner">
-      <input class="prec-busca-input" id="prec-busca-input" type="text"
-        placeholder="🔍 Buscar peça (toque para ver lista)..."
-        oninput="buscarPecaPrec(this.value)"
-        onfocus="buscarPecaPrec(this.value)"
-        onblur="setTimeout(()=>{const r=document.getElementById('prec-busca-result');if(r)r.classList.remove('aberta');},200)"
-        onkeydown="if(event.key==='Enter'){event.preventDefault();irParaPrimeiraPeca();}else if(event.key==='Escape'){const r=document.getElementById('prec-busca-result');if(r)r.classList.remove('aberta');}">
-      <div class="prec-busca-result" id="prec-busca-result"></div>
-    </div>
-  </div>`;
-
-  // Aqui criamos uma "caixa vazia" que será preenchida e atualizada em tempo real
+  let html = '';
+  
+    // Aqui criamos uma "caixa vazia" que será preenchida e atualizada em tempo real
   html += '<div id="prec-resumo-container"></div>';
 
   // Cards por peça
@@ -3432,16 +3421,16 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
     </div>
 
     <!-- CAMPOS: Tempo / Margem / Perda -->
-    <div class="prec-lucro-row" style="flex-wrap:wrap;gap:0.4rem 0.8rem;border-top:1px solid rgba(107,143,113,0.15)">
+    <div class="prec-lucro-row" style="display:grid;grid-template-columns:auto 60px auto 60px auto 60px;gap:0.4rem 0.5rem;align-items:center;border-top:1px solid rgba(107,143,113,0.15)">
       <label>Tempo (min)</label>
       <input class="prec-lucro-input" type="number" min="1" step="1"
         value="${mins}" id="prec-tempo-${p.id}"
         oninput="atualizarTempoPrec(${p.id}, this.value)">
-      <label style="margin-left:0.4rem">Margem (%)</label>
+      <label>Margem (%)</label>
       <input class="prec-lucro-input" type="number" min="0" max="99" step="1"
         value="${d.lucro}"
         oninput="atualizarLucroPrec(${p.id}, this.value)">
-      <label style="margin-left:0.4rem">Perda resina (%)</label>
+      <label>Perda (%)</label>
       <input class="prec-lucro-input" type="number" min="0" max="50" step="1"
         value="${d.perdaResina ?? 5}"
         oninput="atualizarPerdaResina(${p.id}, this.value)">
