@@ -3003,13 +3003,34 @@ function salvarCustos() {
     const elPrazo = document.getElementById('c-prazo-producao');
     if (elPrazo) custosConfig.prazoProducao = parseInt(elPrazo.value) || 120;
     
+    // Sincroniza processosMins de todas as peças com os processos globais:
+    // - processos existentes mantêm o tempo que já estava na peça
+    // - processos novos entram com o tempo padrão do global
+    // - processos removidos do global somem do array
+    const procs = custosConfig.processos || [];
+    pecas.forEach(p => {
+      const d = getPrecPeca(p.id);
+      const oldMins = d.processosMins || [];
+      // Reconstrói o array alinhado com a lista global atual
+      d.processosMins = procs.map((proc, i) => {
+        // Se já havia um valor salvo nessa posição, mantém; senão usa o padrão do global
+        return (oldMins[i] !== undefined) ? oldMins[i] : (parseInt(proc.mins) || 0);
+      });
+      // Recalcula o tempo total da peça a partir dos processos (só se não foi editado manualmente)
+      if (!d._tempoEditado) {
+        const total = d.processosMins.reduce((s, v) => s + (parseInt(v) || 0), 0);
+        if (total > 0) d.tempo = total;
+      }
+    });
+    salvarPrecLocal();
+
     // Salva na memória do navegador
     localStorage.setItem('villare-custos', JSON.stringify(custosConfig));
 
     closeDrawer('drawer-custos');
     
     // Atualiza as telas
-    if (typeof window._renderPrecBody === 'function') window._renderPrecBody();
+    if (typeof _renderPrecBody === 'function') _renderPrecBody();
     if (typeof renderAll === 'function') renderAll(); 
     
   } catch (erro) {
