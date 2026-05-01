@@ -3003,20 +3003,13 @@ function salvarCustos() {
     const elPrazo = document.getElementById('c-prazo-producao');
     if (elPrazo) custosConfig.prazoProducao = parseInt(elPrazo.value) || 120;
     
-    // Sincroniza processosMins de todas as peças com os processos globais:
-    // - se a peça NÃO teve o tempo editado manualmente (_tempoEditado), puxa sempre do global
-    // - se teve edição manual, mantém o valor que a Natasha digitou
-    // - processos removidos do global somem do array
+    // Sincroniza processosMins e tempo de todas as peças com os processos globais
     const procs = custosConfig.processos || [];
     pecas.forEach(p => {
       const d = getPrecPeca(p.id);
-      // Reconstrói o array sempre com os tempos atuais do global
-      d.processosMins = procs.map((proc, i) => parseInt(proc.mins) || 0);
-      // Só recalcula o tempo total se não foi editado manualmente
-      if (!d._tempoEditado) {
-        const total = d.processosMins.reduce((s, v) => s + (parseInt(v) || 0), 0);
-        if (total > 0) d.tempo = total;
-      }
+      d.processosMins = procs.map(proc => parseInt(proc.mins) || 0);
+      const total = d.processosMins.reduce((s, v) => s + v, 0);
+      if (total > 0) d.tempo = total;
     });
     salvarPrecLocal();
 
@@ -3065,7 +3058,7 @@ function atualizarProcessoPeca(pecaId, idx, val) {
   d.processosMins[idx] = parseInt(val) || 0;
   const total = d.processosMins.reduce((s, v) => s + (parseInt(v) || 0), 0);
   d.tempo = Math.max(1, total || 1);
-  d._tempoEditado = true;
+
   const inp = document.getElementById('prec-tempo-' + pecaId);
   if (inp) inp.value = d.tempo;
   recalcularCard(pecaId);
@@ -3565,7 +3558,7 @@ function atualizarPerdaResina(pecaId, val) {
 function atualizarTempoPrec(pecaId, val) {
   const d = getPrecPeca(pecaId);
   d.tempo = Math.max(1, parseInt(val) || 60);
-  d._tempoEditado = true;
+
   
   recalcularCard(pecaId);
   
