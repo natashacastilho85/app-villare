@@ -3334,43 +3334,106 @@ document.addEventListener('click', (e) => {
   }
 });
 
-function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
-  const mins    = d.tempo || getTotalProcessosMins() || 60;
+window.renderPrecCard = function(p, d, valorHora, custoFixoHora, cardIdx) {
+  const lucroVar = d.lucro !== undefined ? d.lucro : 100;
+  const perdaResinaVar = d.perdaResina !== undefined ? d.perdaResina : 5;
+  
+  // NOVA LÓGICA DE BUSCA DE PROCESSOS
+  let listaProcessos = [];
+  
+  // 1. Tenta processos específicos da peça
+  if (d.processos && d.processos.length > 0) {
+    listaProcessos = d.processos;
+  } 
+  // 2. Se não tem, tenta processos globais (Ajustado para o seu sistema)
+  else {
+    const globais = (typeof custosPessoais !== 'undefined') ? custosPessoais : (typeof config !== 'undefined' ? config : null);
+    if (globais && globais.processos) {
+      listaProcessos = globais.processos;
+    }
+  }
+
+  // Calcula tempo total
+  const tempoTotalCalculado = listaProcessos.reduce((acc, cur) => acc + (parseFloat(cur.tempo) || 0), 0);
+  const mins = d.tempo !== undefined ? d.tempo : tempoTotalCalculado;
+
   const salario = valorHora * (mins / 60);
   const custoFixo = custoFixoHora * (mins / 60);
-  // Aplica perda de resina: soma custo extra sobre materiais com "resina" no nome
-  const perdaResina = (d.perdaResina ?? 5) / 100;
-  const materiaisComPerda = d.materiais.map(m => {
-    if ((m.nome || '').toLowerCase().includes('resina') && perdaResina > 0) {
-      return { ...m, valor: (parseFloat(m.valor) || 0) * (1 + perdaResina) };
+  const perdaResinaDecimal = perdaResinaVar / 100;
+
+  const materiaisComPerda = (d.materiais || []).map(m => {
+    if ((m.nome || '').toLowerCase().includes('resina') && perdaResinaDecimal > 0) {
+      return { ...m, valor: (parseFloat(m.valor) || 0) * (1 + perdaResinaDecimal) };
     }
     return m;
   });
-  const r = calcPrec(materiaisComPerda, d.lucro, salario, custoFixo);
-  const fmtR = v => 'R$ ' + v.toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2});
 
-  let matRows = d.materiais.map((m, i) => {
-    // Material vinculado a um cadastrado: mostra qtd editável + custo calculado
+  const r = window.calcPrec(materiaisComPerda, lucroVar, salario, custoFixo);
+  const fmtR = v => 'R$ ' + (parseFloat(v)||0).toLocaleString('pt-BR', {minimumFractionDigits:2});
+  const isPC = window.innerWidth >= 1024;
+
+  let matRows = (d.materiais || []).map((m, i) => {
     if (m.matGlobalId) {
-      const matG = matGlobais.find(x => x.id === m.matGlobalId);
+      const matG = (typeof matGlobais !== 'undefined') ? matGlobais.find(x => x.id === m.matGlobalId) : null;
       if (matG) {
-        const qtdAtual = m.qtdUsada || 0;
-        const unidade = matG.unidade;
-        return `
-        <div class="prec-mat-row prec-mat-row-qtd" id="prec-mat-${p.id}-${i}">
-          <span class="prec-mat-nome">${matG.nome}</span>
-          <div class="prec-mat-qtd-wrap">
-            <input class="prec-mat-qtd-input" type="number" step="0.01" min="0"
-              value="${qtdAtual > 0 ? qtdAtual : ''}"
-              placeholder="0"
-              oninput="atualizarQtdMatPrec(${p.id}, ${i}, this.value)">
-            <span class="prec-mat-unit">${unidade}</span>
-          </div>
-          <span class="prec-mat-custo-calc" id="prec-mat-custo-${p.id}-${i}">${m.valor > 0 ? fmtR(m.valor) : '—'}</span>
-          <button class="prec-mat-del" onclick="removerMatPrec(${p.id}, ${i})" title="Remover">×</button>
-        </div>`;
+        return `<div class="prec-mat-row prec-mat-row-qtd"><span class="prec-mat-nome">${matG.nome}</span><div class="prec-mat-qtd-wrap"><input class="prec-mat-qtd-input" type="number" step="0.01" value="${m.qtdUsada || ''}" oninput="atualizarQtdMatPrec(${p.id}, ${i}, this.value)"><span class="prec-mat-unit">${matG.unidade}</span></div><span class="prec-mat-custo-calc">${m.valor > 0 ? fmtR(m.valor) : '—'}</span></div>`;
       }
     }
+    return `<div class="prec-mat-row"><span class="prec-mat-nome">${m.nome}</span><input class="prec-mat-input" type="number" value="${m.valor > 0 ? m.valor.toFixed(2) : ''}" oninput="atualizarMatPrec(${p.id}, ${i}, this.value)"></div>`;
+  }).join('');
+
+  let procRows = listaProcessos.map((proc, i) => {
+    return `<div class="prec-mat-row">
+      <span class="prec-mat-nome">${proc.nome || 'Processo'}</span>
+      <div class="prec-mat-qtd-wrap">
+        <input class="prec-mat-qtd-input" type="number" value="${proc.tempo || 0}" oninput="atualizarTempoProcPrec(${p.id}, ${i}, this.value)">
+        <span class="prec-mat-unit">min</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div class="prec-peca-card ${cardIdx % 2 === 1 ? 'par' : ''}" id="prec-card-${p.id}">
+    <div class="prec-peca-header"><span class="prec-peca-nome" onclick="openPeca(${p.id})">${p.nome} ✏️</span></div>
+
+    <div class="prec-ajustes-topo">
+       <div class="ajuste-item">
+         <label>Tempo (min)</label>
+         <input type="number" value="${mins}" oninput="atualizarCampoPeca(${p.id}, 'tempo', this.value)">
+       </div>
+       <div class="ajuste-item">
+         <label>Lucro (%)</label>
+         <input type="number" value="${lucroVar}" oninput="atualizarCampoPeca(${p.id}, 'lucro', this.value)">
+       </div>
+       <div class="ajuste-item">
+         <label>Perda (%)</label>
+         <input type="number" value="${perdaResinaVar}" oninput="atualizarCampoPeca(${p.id}, 'perdaResina', this.value)">
+       </div>
+    </div>
+    
+    <div class="materiais-toggle" style="${isPC ? 'display:none' : ''}" onclick="toggleSecaoVisivel('list-mat-${p.id}', 'seta-mat-${p.id}')">
+      <span>Materiais</span><span id="seta-mat-${p.id}">▼</span>
+    </div>
+    <div class="materiais-content ${isPC ? 'aberto' : ''}" id="list-mat-${p.id}">
+      ${matRows}
+      <button class="prec-add-btn" onclick="adicionarMatPrec(${p.id})">＋ Material</button>
+    </div>
+
+    <div class="materiais-toggle" style="border-top: 1px solid var(--border); ${isPC ? 'display:none' : ''}" onclick="toggleSecaoVisivel('list-proc-${p.id}', 'seta-proc-${p.id}')">
+      <span>Processos</span><span id="seta-proc-${p.id}">▼</span>
+    </div>
+    <div class="materiais-content ${isPC ? 'aberto' : ''}" id="list-proc-${p.id}">
+      ${procRows}
+      <button class="prec-add-btn" onclick="adicionarProcPrec(${p.id})">＋ Processo</button>
+    </div>
+
+    <div class="prec-resultado">
+      <div class="prec-res-row"><span class="lbl">Custo Total</span><span class="val">${fmtR(r.custoTotalReal)}</span></div>
+      <div class="prec-res-row"><span class="lbl" style="color:var(--sage)">Lucro</span><span class="val" style="color:var(--sage)">${fmtR(r.valorLucro)}</span></div>
+      <div class="prec-res-total"><span class="lbl">PIX</span><span class="val">${fmtR(r.precoBase)}</span></div>
+      <div class="prec-res-total"><span class="lbl" style="color:var(--brown)">CARTÃO</span><span class="val" style="font-size:1.3rem; color:var(--brown)">${fmtR(r.precoCartao)}</span></div>
+    </div>
+  </div>`;
+};
 
 window.atualizarCampoPeca = function(pecaId, campo, valor) {
   const p = pecas.find(x => x.id === pecaId);
