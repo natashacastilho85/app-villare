@@ -4244,6 +4244,7 @@ window.renderPrecCard = function(p, d, valorHora, custoFixoHora, cardIdx) {
   const fmtR = v => 'R$ ' + (parseFloat(v)||0).toLocaleString('pt-BR', {minimumFractionDigits:2});
   const isPC = window.innerWidth >= 1024;
 
+  // 1. Monta as linhas de Materiais
   let matRows = d.materiais.map((m, i) => {
     if (m.matGlobalId) {
       const matG = (typeof matGlobais !== 'undefined') ? matGlobais.find(x => x.id === m.matGlobalId) : null;
@@ -4254,10 +4255,36 @@ window.renderPrecCard = function(p, d, valorHora, custoFixoHora, cardIdx) {
     return `<div class="prec-mat-row"><span class="prec-mat-nome">${m.nome}</span><input class="prec-mat-input" type="number" value="${m.valor > 0 ? m.valor.toFixed(2) : ''}" oninput="atualizarMatPrec(${p.id}, ${i}, this.value)"></div>`;
   }).join('');
 
+  // 2. Monta as linhas de Processos (A parte que tinha sumido!)
+  let procRows = (d.processos || []).map((proc, i) => {
+    return `<div class="prec-mat-row">
+      <span class="prec-mat-nome">${proc.nome || 'Processo'}</span>
+      <span class="prec-mat-custo-calc" style="font-size: 0.9rem; padding-right: 10px;">${proc.tempo || 0} min</span>
+    </div>`;
+  }).join('');
+
   return `<div class="prec-peca-card ${cardIdx % 2 === 1 ? 'par' : ''}" id="prec-card-${p.id}">
     <div class="prec-peca-header"><span class="prec-peca-nome" onclick="openPeca(${p.id})">${p.nome} ✏️</span></div>
-    <div class="materiais-toggle" style="${isPC ? 'display:none' : ''}" onclick="toggleSecaoVisivel('list-mat-${p.id}', 'seta-mat-${p.id}')"><span>Materiais</span><span id="seta-mat-${p.id}">▼</span></div>
-    <div class="materiais-content ${isPC ? 'aberto' : ''}" id="list-mat-${p.id}">${matRows}<button class="prec-add-btn" onclick="adicionarMatPrec(${p.id})">＋ Material</button></div>
+    
+    <!-- GAVETA DE MATERIAIS -->
+    <div class="materiais-toggle" style="${isPC ? 'display:none' : ''}" onclick="toggleSecaoVisivel('list-mat-${p.id}', 'seta-mat-${p.id}')">
+      <span>Materiais</span><span id="seta-mat-${p.id}">▼</span>
+    </div>
+    <div class="materiais-content ${isPC ? 'aberto' : ''}" id="list-mat-${p.id}">
+      ${matRows}
+      <button class="prec-add-btn" onclick="adicionarMatPrec(${p.id})">＋ Material</button>
+    </div>
+
+    <!-- GAVETA DE PROCESSOS -->
+    <div class="materiais-toggle" style="${isPC ? 'display:none; border-top: 1px solid var(--border)' : 'border-top: 1px solid var(--border)'}" onclick="toggleSecaoVisivel('list-proc-${p.id}', 'seta-proc-${p.id}')">
+      <span>Processos</span><span id="seta-proc-${p.id}">▼</span>
+    </div>
+    <div class="materiais-content ${isPC ? 'aberto' : ''}" id="list-proc-${p.id}">
+      ${procRows}
+      <button class="prec-add-btn" onclick="adicionarProcPrec(${p.id})">＋ Processo</button>
+    </div>
+
+    <!-- RESULTADOS -->
     <div class="prec-resultado">
       <div class="prec-res-row"><span class="lbl">Custo Total</span><span class="val">${fmtR(r.custoTotalReal)}</span></div>
       <div class="prec-res-row"><span class="lbl" style="color:var(--sage)">Lucro</span><span class="val" style="color:var(--sage)">${fmtR(r.valorLucro)}</span></div>
@@ -4266,6 +4293,7 @@ window.renderPrecCard = function(p, d, valorHora, custoFixoHora, cardIdx) {
     </div>
   </div>`;
 };
+
 
 window.toggleSecaoVisivel = function(id, setaId) {
   const c = document.getElementById(id); const s = document.getElementById(setaId);
