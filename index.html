@@ -1424,7 +1424,8 @@ async function initApp() {
   } catch(e) {
     console.error('Erro ao carregar dados:', e);
   }
- // Carrega materiais e precificação do Supabase
+  // Carrega custos, materiais e precificação do Supabase
+  await carregarCustosSupabase();
   await carregarMatGlobaisSupabase();
   await carregarPrecSupabase();
   hideLoading();
@@ -2946,13 +2947,27 @@ const CUSTOS_DEFAULT = {
 
 let custosConfig = {...CUSTOS_DEFAULT};
 
-function carregarCustos() {
+async function carregarCustosSupabase() {
   try {
-    const s = localStorage.getItem(CUSTOS_KEY);
-    if (s) custosConfig = JSON.parse(s);
-  } catch(e) {}
+    const data = await sbFetch('configuracoes?chave=eq.villare-custos');
+    if (data && data[0] && data[0].valor) {
+      custosConfig = { ...CUSTOS_DEFAULT, ...data[0].valor };
+    } else {
+      // Fallback: tenta migrar do localStorage se ainda tiver dados lá
+      const s = localStorage.getItem(CUSTOS_KEY);
+      if (s) {
+        custosConfig = JSON.parse(s);
+        // Migra pro Supabase e limpa o localStorage
+        await sbFetch('configuracoes', {
+          method: 'POST',
+          headers: { 'Prefer': 'resolution=merge-duplicates', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chave: 'villare-custos', valor: custosConfig })
+        });
+        localStorage.removeItem(CUSTOS_KEY);
+      }
+    }
+  } catch(e) { console.error('Erro ao carregar custos:', e); }
 }
-carregarCustos();
 
 function getValorHora() {
   const horasMes = (custosConfig.horasPorDia || 0) * (custosConfig.diasPorMes || 0);
@@ -2991,7 +3006,7 @@ function openCustos() {
   openDrawer('drawer-custos');
 }
 
-function salvarCustos() {
+async function salvarCustos() {
   try {
     custosConfig.salarioMensal = parseFloat(document.getElementById('c-salario-mensal').value) || 0;
     custosConfig.horasPorDia = parseFloat(document.getElementById('c-horas-dia').value) || 0;
@@ -3013,8 +3028,13 @@ function salvarCustos() {
     });
     salvarPrecLocal();
 
-    // Salva na memória do navegador
-    localStorage.setItem('villare-custos', JSON.stringify(custosConfig));
+    // Salva no Supabase (sincroniza entre todos os dispositivos)
+    await sbFetch('configuracoes', {
+      method: 'POST',
+      headers: { 'Prefer': 'resolution=merge-duplicates', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chave: 'villare-custos', valor: custosConfig })
+    });
+    localStorage.removeItem('villare-custos'); // Remove versão local antiga se existir
 
     closeDrawer('drawer-custos');
     
@@ -3358,10 +3378,12 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
   const procs = custosConfig.processos || [];
   let procRows = '';
   if (procs.length) {
-    if (!d.processosMins) d.processosMins = procs.map(p => p.mins || 0);
-    while (d.processosMins.length < procs.length) d.processosMins.push(0);
+    // Sempre reconstrói do global — ignora array salvo para evitar desalinhamento entre dispositivos
+    d.processosMins = procs.map(proc => parseInt(proc.mins) || 0);
+    const totalProcs = d.processosMins.reduce((s, v) => s + v, 0);
+    if (totalProcs > 0) d.tempo = totalProcs;
     procRows = procs.map((proc, i) => {
-      const val = d.processosMins[i] ?? proc.mins ?? 0;
+      const val = d.processosMins[i] || 0;
       return `<div class="prec-proc-row">
         <span class="prec-proc-nome">${proc.nome || 'Processo ' + (i+1)}</span>
         <input class="prec-proc-input" type="number" min="0" step="1"
