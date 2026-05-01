@@ -1053,8 +1053,7 @@
     <textarea id="e-f-obs-geral" class="field-input" rows="4" placeholder="Flores, cores, detalhes do fundo..."></textarea>
   </div>
   
-  <div style="height: 50px;"></div>
-</div>
+  </div><!-- fim bloco ficha -->
 
     <button type="button" class="btn-primary" style="background:rgba(107,143,113,0.1); color:var(--sage); border:1px solid rgba(107,143,113,0.3); margin-top: 0.5rem;" onclick="imprimirFichaPeloForm('e')">🖨️ Imprimir Ficha Agora</button>
     <button class="btn-primary" onclick="saveEditContrato()">Salvar alterações</button>
@@ -4229,29 +4228,29 @@ function gerarImpressaoFicha(c, f) {
   <meta charset="UTF-8">
   <title>Ficha · ${c.nome}</title>
   <style>
-    @page { size: A5 portrait; margin: 8mm 12mm; }
-    @media screen { body { width: 148mm; margin: 0 auto; padding: 8mm 12mm; } }
+    @page { size: A5 portrait; margin: 30mm 15mm 15mm 15mm; }
+    @media screen { body { width: 148mm; margin: 0 auto; padding: 30mm 15mm 15mm; } }
     * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     html, body { margin: 0; padding: 0; }
-    body { font-family: 'Calibri', Arial, sans-serif; color: #333; font-size: 11px; line-height: 1.4; }
-    .header { text-align: center; border-bottom: 1.5px solid #B8862A; padding-bottom: 6px; margin-bottom: 8px; }
-    .header h1 { margin: 0; font-size: 17px; color: #4A3320; letter-spacing: 2px; }
-    .header p { margin: 2px 0 0; font-size: 7.5px; color: #999; text-transform: uppercase; letter-spacing: 3px; }
-    .row { display: flex; justify-content: space-between; border-bottom: 1px solid #f0ece6; padding: 3px 0; gap: 8px; }
-    .label { font-weight: 600; color: #4A3320; min-width: 34%; flex-shrink:0; }
-    .value { color: #222; text-align:right; flex:1; }
-    .badges { display: flex; gap: 8px; margin: 8px 0; }
-    .badge { flex:1; background: #faf9f7; padding: 5px 8px; text-align: center; border: 1px solid #e8e3dc; border-radius: 4px; }
-    .badge strong { display:block; font-size:8px; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:3px; }
-    .badge span { font-size: 13px; color: #4A3320; font-weight: 700; }
-    .section-title { font-size: 8.5px; font-weight: 700; color: #B8862A; text-transform: uppercase; letter-spacing: 1px; margin: 8px 0 4px; border-top: 1px solid #f0ece6; padding-top: 5px; }
-    .peca-row { display:flex; justify-content:space-between; padding: 3px 0; border-bottom: 1px solid #f5f0eb; gap: 8px; }
+    body { font-family: 'Calibri', Arial, sans-serif; color: #333; font-size: 13px; line-height: 1.5; }
+    .header { text-align: center; border-bottom: 2px solid #B8862A; padding-bottom: 7px; margin-bottom: 12px; }
+    .header h1 { margin: 0; font-size: 22px; color: #4A3320; letter-spacing: 2px; }
+    .header p { margin: 2px 0 0; font-size: 9px; color: #999; text-transform: uppercase; letter-spacing: 3px; }
+    .row { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; border-bottom: 1px solid #f0ece6; padding: 4px 0; align-items: baseline; }
+    .label { font-weight: 700; color: #4A3320; white-space: nowrap; }
+    .value { color: #222; }
+    .badges { display: flex; gap: 10px; margin: 10px 0; }
+    .badge { flex:1; background: #faf9f7; padding: 6px 10px; text-align: center; border: 1px solid #e8e3dc; border-radius: 4px; }
+    .badge strong { display:block; font-size:9px; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:3px; }
+    .badge span { font-size: 16px; color: #4A3320; font-weight: 700; }
+    .section-title { font-size: 10px; font-weight: 700; color: #B8862A; text-transform: uppercase; letter-spacing: 1px; margin: 12px 0 5px; border-top: 1px solid #f0ece6; padding-top: 6px; }
+    .peca-row { display:flex; justify-content:space-between; padding: 4px 0; border-bottom: 1px solid #f5f0eb; gap: 12px; }
     .peca-row span:first-child { color: #4A3320; font-weight: 600; }
     .peca-row span:last-child { color: #7a4a28; white-space:nowrap; }
-    .total-row { display:flex; justify-content:space-between; margin-top:5px; padding-top:5px; border-top:1.5px solid #B8862A; }
-    .total-row .lbl { font-weight:700; color:#4A3320; font-size:12px; }
-    .total-row .val { font-size:13px; font-weight:700; color:#4A3320; }
-    .obs-box { margin-top:6px; background:#faf9f7; border:1px solid #e8e3dc; border-radius:3px; padding:5px 7px; min-height:32px; white-space:pre-wrap; }
+    .total-row { display:flex; justify-content:space-between; margin-top:6px; padding-top:6px; border-top:2px solid #B8862A; }
+    .total-row .lbl { font-weight:700; color:#4A3320; font-size:14px; }
+    .total-row .val { font-size:15px; font-weight:700; color:#4A3320; }
+    .obs-box { margin-top:8px; background:#faf9f7; border:1px solid #e8e3dc; border-radius:4px; padding:6px 9px; min-height:38px; white-space:pre-wrap; }
   </style>
 </head>
 <body onload="setTimeout(function(){window.print();},400)">
