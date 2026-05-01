@@ -1569,28 +1569,50 @@ let _zDrawerAtual = 200; // z-index base
 
 function openDrawer(id) {
   const el = document.getElementById(id);
-  if (!el) return;
-  // Z-index incremental — cada drawer empilhado fica acima do anterior
+  if (!el) {
+    alert('Aviso do Sistema: A gaveta não foi encontrada.');
+    return;
+  }
+  
   _zDrawerAtual += 10;
   el.style.setProperty('--drawer-z', _zDrawerAtual);
+  
+  // FORÇA BRUTA VISUAL: Obriga o navegador a mostrar o elemento
+  el.style.display = 'block'; 
+  el.style.opacity = '1';
+  el.style.visibility = 'visible';
+  el.style.zIndex = '9999'; 
+  
   el.classList.add('open');
+  
   const inner = el.querySelector('.drawer');
-  if (inner) inner.scrollTop = 0;
+  if (inner) {
+    inner.scrollTop = 0;
+    inner.style.transform = 'translateY(0)'; // Força a gaveta a subir
+  }
+  
   _drawerStack.push(id);
-  // Empurra entrada no history: o próximo "voltar" do Android vai disparar popstate
-  // e fechar este drawer, sem fechar o app
-  history.pushState({ villare: 'drawer', id }, '');
+  try { history.pushState({ villare: 'drawer', id }, ''); } catch(e) {}
 }
 
 function closeDrawer(id) {
   const el = document.getElementById(id);
   if (!el) return;
+  
   el.classList.remove('open');
+  
+  // REMOVE A FORÇA BRUTA
+  el.style.display = 'none'; 
+  el.style.visibility = 'hidden';
   el.style.removeProperty('--drawer-z');
-  // Remove da pilha lógica SEM tocar no history
+  
+  const inner = el.querySelector('.drawer');
+  if (inner) {
+    inner.style.transform = 'translateY(100%)';
+  }
+  
   const idx = _drawerStack.lastIndexOf(id);
   if (idx >= 0) _drawerStack.splice(idx, 1);
-  // Reduz z-index base se foi o último
   if (_drawerStack.length === 0) _zDrawerAtual = 200;
   else _zDrawerAtual = Math.max(200, _zDrawerAtual - 10);
 }
