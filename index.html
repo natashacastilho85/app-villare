@@ -3494,19 +3494,25 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
     </div>
 
     <!-- CAMPOS: Tempo / Margem / Perda -->
-    <div class="prec-lucro-row" style="display:grid;grid-template-columns:auto 60px auto 60px auto 60px;gap:0.4rem 0.5rem;align-items:center;border-top:1px solid rgba(107,143,113,0.15)">
-      <label>Tempo (min)</label>
-      <input class="prec-lucro-input" type="number" min="1" step="1"
-        value="${mins}" id="prec-tempo-${p.id}"
-        oninput="atualizarTempoPrec(${p.id}, this.value)">
-      <label>Margem (%)</label>
-      <input class="prec-lucro-input" type="number" min="0" max="99" step="1"
-        value="${d.lucro}"
-        oninput="atualizarLucroPrec(${p.id}, this.value)">
-      <label>Perda (%)</label>
-      <input class="prec-lucro-input" type="number" min="0" max="50" step="1"
-        value="${d.perdaResina ?? 5}"
-        oninput="atualizarPerdaResina(${p.id}, this.value)">
+    <div class="prec-lucro-row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;border-top:1px solid rgba(107,143,113,0.15);padding:0.6rem 1rem">
+      <div style="display:flex;flex-direction:column;gap:0.25rem">
+        <label style="font-size:0.65rem;color:var(--muted);letter-spacing:0.05em;text-transform:uppercase">Tempo (min)</label>
+        <input class="prec-lucro-input" type="number" min="1" step="1"
+          value="${mins}" id="prec-tempo-${p.id}"
+          oninput="atualizarTempoPrec(${p.id}, this.value)" style="width:100%">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.25rem">
+        <label style="font-size:0.65rem;color:var(--muted);letter-spacing:0.05em;text-transform:uppercase">Margem (%)</label>
+        <input class="prec-lucro-input" type="number" min="0" max="99" step="1"
+          value="${d.lucro}"
+          oninput="atualizarLucroPrec(${p.id}, this.value)" style="width:100%">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.25rem">
+        <label style="font-size:0.65rem;color:var(--muted);letter-spacing:0.05em;text-transform:uppercase">Perda (%)</label>
+        <input class="prec-lucro-input" type="number" min="0" max="50" step="1"
+          value="${d.perdaResina ?? 5}"
+          oninput="atualizarPerdaResina(${p.id}, this.value)" style="width:100%">
+      </div>
     </div>
 
     <!-- RESUMO FINANCEIRO -->
