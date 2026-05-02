@@ -2644,7 +2644,16 @@ function openDetail(id) {
     </div>
     <div class="detail-section">
       <div class="detail-section-title">Peças contratadas</div>
-      ${c.pecas.map(p=>`<div class="detail-row"><span class="dl">${p.qtd}× ${p.nome}</span><span class="dv">R$ ${(p.valor*p.qtd).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>`).join('')}
+      ${c.pecas.map(p => {
+        const vUnit = (parseFloat(p.valor)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+        const vTotal = ((parseFloat(p.valor)||0)*(parseInt(p.qtd)||1)).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+        return `<div class="detail-row">
+          <span class="dl">${p.qtd}× ${p.nome}</span>
+          <span class="dv" style="text-align:right;line-height:1.5">
+            ${p.qtd>1?`<span style="font-size:0.68rem;color:var(--muted)">R$ ${vUnit} × ${p.qtd}</span><br>`:''}R$ ${vTotal}
+          </span>
+        </div>`;
+      }).join('')}
       ${(c.desconto||0) > 0 ? `<div class="detail-row"><span class="dl" style="color:var(--bordeaux)">Desconto aplicado</span><span class="dv" style="color:var(--bordeaux)">− R$ ${c.desconto.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>` : ''}
       <div class="detail-row" style="padding-top:0.4rem"><span class="dl" style="color:var(--dark)">Total ${(c.desconto||0) > 0 ? 'final' : 'bruto'}</span><span class="dv" style="color:var(--brown);font-family:'Calibri',serif;font-size:1.1rem">R$ ${c.valorBruto.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>
     </div>
