@@ -1194,7 +1194,11 @@
       </div>
       <div class="field-group">
         <label class="field-label">Hora</label>
-        <input class="field-input" id="notif-manual-hora" type="time" value="09:00">
+        <div style="display:flex;align-items:center;gap:0.4rem">
+          <input class="field-input" id="notif-manual-hh" type="number" min="0" max="23" placeholder="09" style="width:60px;text-align:center;padding:0.75rem 0.4rem">
+          <span style="font-size:1.2rem;color:var(--muted);font-weight:600">:</span>
+          <input class="field-input" id="notif-manual-mm" type="number" min="0" max="59" placeholder="00" style="width:60px;text-align:center;padding:0.75rem 0.4rem">
+        </div>
       </div>
     </div>
     <button class="btn-primary" onclick="salvarNotifManual()">Salvar</button>
@@ -4649,16 +4653,20 @@ function abrirNovaNotifManual() {
   const hoje = new Date().toISOString().slice(0,10);
   document.getElementById('notif-manual-texto').value = '';
   document.getElementById('notif-manual-data').value = hoje;
-  document.getElementById('notif-manual-hora').value = '09:00';
+  document.getElementById('notif-manual-hh').value = '9';
+  document.getElementById('notif-manual-mm').value = '00';
   openDrawer('drawer-notif-manual');
 }
 
 async function salvarNotifManual() {
   const texto = document.getElementById('notif-manual-texto').value.trim();
   const data = document.getElementById('notif-manual-data').value;
-  const hora = document.getElementById('notif-manual-hora').value;
+  const hh = String(parseInt(document.getElementById('notif-manual-hh').value) || 0).padStart(2,'0');
+  const mm = String(parseInt(document.getElementById('notif-manual-mm').value) || 0).padStart(2,'0');
+  const hora = hh + ':' + mm;
   if (!texto) { alert('Escreva a mensagem.'); return; }
-  if (!data || !hora) { alert('Informe data e hora.'); return; }
+  if (!data) { alert('Informe a data.'); return; }
+  if (parseInt(hh) > 23 || parseInt(mm) > 59) { alert('Hora inválida.'); return; }
   // Salva como UTC-3 (Brasília)
   const dataHora = data + 'T' + hora + ':00-03:00';
   try {
