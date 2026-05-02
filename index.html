@@ -440,6 +440,7 @@
   .screen {
     display: none;
     padding: 2rem;
+    padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px));
     max-width: 1400px; 
     margin: 0 auto !important; 
     position: relative;
@@ -1802,21 +1803,64 @@ function getPrecoPecaCalculado(pecaId) {
   return r.precoCartao > 0 ? r.precoCartao : null;
 }
 
-function _optsLinhaPeca() {
-  return pecas.map(p => {
+function _optsLinhaPeca(pecaIdSelecionada) {
+  const ordenadas = [...pecas].sort((a,b) => a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));
+  return ordenadas.map(p => {
     const preco = getPrecoPecaCalculado(p.id);
     const label = preco
       ? `${p.nome} — R$ ${preco.toLocaleString('pt-BR', {minimumFractionDigits:2,maximumFractionDigits:2})}`
       : p.nome;
-    return `<option value="${p.id}">${label}</option>`;
+    const sel = pecaIdSelecionada === p.id ? ' selected' : '';
+    return `<option value="${p.id}"${sel}>${label}</option>`;
   }).join('');
 }
 
 function adicionarLinhaPeca() {
+  // Ordena peças alfabeticamente
+  const pecasOrdenadas = [...pecas].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', {sensitivity:'base'}));
+  
+  // Cria overlay do seletor
+  let overlay = document.getElementById('modal-sel-peca');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'modal-sel-peca';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(42,26,14,0.45);z-index:9000;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(3px)';
+    document.body.appendChild(overlay);
+  }
+
+  const itens = pecasOrdenadas.map(p => {
+    const preco = getPrecoPecaCalculado(p.id);
+    const precoStr = preco ? ` — R$ ${preco.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}` : '';
+    return `<div onclick="confirmarPecaNovo(${p.id})" style="padding:0.65rem 1rem;border-bottom:1px solid rgba(184,134,42,0.08);cursor:pointer;font-size:0.9rem;color:var(--dark);display:flex;justify-content:space-between;align-items:center">
+      <span>${p.nome}</span>
+      <span style="color:var(--brown);font-family:'Calibri',serif">${precoStr}</span>
+    </div>`;
+  }).join('');
+
+  overlay.innerHTML = `
+    <div onclick="event.stopPropagation()" style="background:var(--warm-white);border-radius:16px 16px 0 0;width:100%;max-width:520px;max-height:75vh;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom,0px)">
+      <div style="padding:1rem 1rem 0.5rem;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(184,134,42,0.12)">
+        <span style="font-family:'Calibri',serif;font-size:1.1rem;color:var(--brown)">Escolher peça</span>
+        <button onclick="document.getElementById('modal-sel-peca').remove()" style="background:none;border:none;font-size:1.4rem;color:var(--muted);cursor:pointer;line-height:1">×</button>
+      </div>
+      ${itens || '<div style="padding:1rem;color:var(--muted);font-style:italic">Nenhuma peça cadastrada</div>'}
+    </div>`;
+  overlay.onclick = () => overlay.remove();
+  overlay.style.display = 'flex';
+}
+
+function confirmarPecaNovo(pecaId) {
+  const overlay = document.getElementById('modal-sel-peca');
+  if (overlay) overlay.remove();
+  const p = pecas.find(x => x.id === pecaId);
+  if (!p) return;
+  const preco = getPrecoPecaCalculado(pecaId) || 0;
+  const precoStr = preco ? ` — R$ ${preco.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}` : '';
   const container = document.getElementById('pecas-selecionadas');
   const div = document.createElement('div');
   div.style.cssText = 'display:grid;grid-template-columns:1fr 60px 24px;gap:0.4rem;align-items:center';
-  div.innerHTML = `<select class="field-input" style="padding:0.5rem 0.6rem;font-size:0.82rem">${_optsLinhaPeca()}</select><input class="field-input" type="number" min="1" value="1" style="padding:0.5rem 0.4rem;text-align:center;font-size:0.82rem"><button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--bordeaux);font-size:1.2rem;cursor:pointer;padding:0;line-height:1">×</button>`;
+  // Usa um select com a peça já selecionada + campo de qtd
+  div.innerHTML = `<select class="field-input" style="padding:0.5rem 0.6rem;font-size:0.82rem">${_optsLinhaPeca(pecaId)}</select><input class="field-input" type="number" min="1" value="1" style="padding:0.5rem 0.4rem;text-align:center;font-size:0.82rem"><button type="button" onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--bordeaux);font-size:1.2rem;cursor:pointer;padding:0;line-height:1">×</button>`;
   container.appendChild(div);
 }
 
