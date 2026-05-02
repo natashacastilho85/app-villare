@@ -1791,13 +1791,17 @@ async function saveContrato() {
   const pagamentosIni = gerarPagamentosIniciais(formaPag, valorFinal);
 
   try {
-    await sbInsert('contratos', {
+    const [novoContrato] = await sbInsert('contratos', {
       nome, status, casamento, contrato, cidade, estado, envio, telefone,
       forma_pag: formaPag, valor_bruto: valorFinal, desconto, pecas: pecasSel,
       pagamentos: pagamentosIni, ficha_producao: ficha
     });
+    const novoMapeado = mapContrato(novoContrato);
+    contratos.push(novoMapeado);
     closeDrawer('drawer-new');
-    window.location.reload();
+    renderAll();
+    goTabById('contratos');
+    setTimeout(() => openDetail(novoMapeado.id), 300);
   } catch(e) { alert('Erro ao salvar: ' + e.message); }
 }
 
@@ -2028,7 +2032,14 @@ function contratoCardHTML(c) {
   const saldo = c.valorBruto - pago;
   const pct = c.valorBruto > 0 ? Math.round(pago/c.valorBruto*100) : 0;
   const [y,m,d] = c.casamento.split('-');
-  const pecasStr = c.pecas.map(p=>`${p.qtd>1?p.qtd+'× ':''}${p.nome}`).join(' + ');
+  const pecasStr = c.pecas.map(p => {
+    if (p.qtd > 1) {
+      const vUnit = (parseFloat(p.valor)||0).toLocaleString('pt-BR',{minimumFractionDigits:0});
+      const vTotal = ((parseFloat(p.valor)||0)*p.qtd).toLocaleString('pt-BR',{minimumFractionDigits:0});
+      return `${p.qtd}× ${p.nome} <span style="font-size:0.6rem;color:var(--muted-light)">R$ ${vUnit}</span> R$ ${vTotal}`;
+    }
+    return p.nome;
+  }).join(' · ');
   const status = statusEfetivo(c);
   const devedor = isDevedor(c);
 
@@ -2811,9 +2822,14 @@ async function saveEditContrato() {
   };
 
   try {
-    await sbUpdate('contratos', contratoEditandoId, dados);
-    fecharEditContrato(); 
-    window.location.reload(); 
+    const [atualizado] = await sbUpdate('contratos', contratoEditandoId, dados);
+    const idx = contratos.findIndex(x => x.id === contratoEditandoId);
+    if (idx >= 0) contratos[idx] = mapContrato(atualizado);
+    closeDrawer('drawer-edit');
+    renderAll();
+    goTabById('contratos');
+    setTimeout(() => openDetail(contratoEditandoId), 300);
+    contratoEditandoId = null;
   } catch(e) { 
     alert('Erro ao atualizar: ' + e.message); 
   }
