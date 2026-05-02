@@ -4349,32 +4349,62 @@ function gerarImpressaoFicha(c, f) {
 initApp();
 
 // ── NOTIF PUSH: detecta ?wa=ID ao abrir pelo clique na notificação ──
-// O SW passa ?wa=CONTRATO_ID na URL. Quando o app carrega, abre o WhatsApp Business.
+// Mostra um botão flutuante — o toque nele é gesto real, permitindo abrir WA Business no Android.
 (function detectarAberturaPorNotificacao() {
   const params = new URLSearchParams(window.location.search);
   const waId = params.get('wa');
-  const waTexto = params.get('texto'); // texto já vem encoded
+  const waTexto = params.get('texto');
   if (!waId) return;
 
-  // Remove o parâmetro da URL sem recarregar a página
+  // Limpa a URL
   const url = new URL(window.location.href);
   url.searchParams.delete('wa');
   url.searchParams.delete('texto');
   history.replaceState({}, '', url.toString());
 
-  // Espera o app carregar os contratos, depois abre o WhatsApp
+  // Cria botão flutuante que aparece assim que o app carregar
+  function mostrarBotaoWA(tel, texto) {
+    const overlay = document.createElement('div');
+    overlay.id = 'wa-notif-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(42,26,14,0.55);z-index:99999;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px)';
+
+    const numero = '55' + tel.replace(/\D/g, '');
+    const txt = encodeURIComponent(texto);
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    // Intent direto para WA Business no Android; wa.me no iOS
+    const href = isAndroid
+      ? `intent://send?phone=${numero}&text=${txt}#Intent;scheme=whatsapp;package=com.whatsapp.w4b;end`
+      : `https://wa.me/${numero}?text=${txt}`;
+
+    overlay.innerHTML = `
+      <div style="background:var(--warm-white,#fff9f5);border-radius:16px 16px 0 0;padding:1.8rem 1.4rem 2.5rem;width:100%;max-width:520px;text-align:center">
+        <div style="font-size:2rem;margin-bottom:0.5rem">💬</div>
+        <div style="font-family:'Calibri',serif;font-size:1.2rem;color:#4A3320;margin-bottom:0.3rem">Mensagem pronta!</div>
+        <div style="font-size:0.8rem;color:#9a7d65;margin-bottom:1.4rem">Toque para abrir o WhatsApp Business</div>
+        <a href="${href}" onclick="document.getElementById('wa-notif-overlay').remove()"
+           style="display:block;background:#25D366;color:white;border-radius:8px;padding:1rem;font-family:'Calibri',sans-serif;font-size:0.95rem;font-weight:600;text-decoration:none;letter-spacing:0.05em;margin-bottom:0.6rem">
+          Abrir WhatsApp Business
+        </a>
+        <button onclick="document.getElementById('wa-notif-overlay').remove()"
+           style="background:none;border:none;color:#9a7d65;font-size:0.8rem;cursor:pointer;padding:0.5rem">
+          Fechar
+        </button>
+      </div>`;
+
+    document.body.appendChild(overlay);
+  }
+
+  // Espera os contratos carregarem
   const tentarAbrir = (tentativas) => {
     const c = contratos.find(x => String(x.id) === String(waId));
     if (c && c.telefone) {
       const texto = waTexto ? decodeURIComponent(waTexto) : '';
-      // Pequeno delay para o app ter carregado a tela
-      setTimeout(() => abrirWhatsBusiness(c.telefone, texto), 600);
+      mostrarBotaoWA(c.telefone, texto);
     } else if (tentativas > 0) {
       setTimeout(() => tentarAbrir(tentativas - 1), 500);
     }
   };
-  // Tenta por até 5 segundos (10 tentativas de 500ms)
-  setTimeout(() => tentarAbrir(10), 500);
+  setTimeout(() => tentarAbrir(10), 800);
 })();
 
 // --- BLOCO FINAL UNIFICADO (VILLARE ATELIER) ---
