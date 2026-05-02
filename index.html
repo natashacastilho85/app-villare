@@ -116,7 +116,7 @@
 
   /* ── CONTEÚDO ── */
   .app-content { flex:1; background:var(--cream); overflow:visible; position:relative; }
-  .screen { display:none; position:absolute; inset:0; padding:1.2rem; padding-bottom:calc(5.5rem + max(env(safe-area-inset-bottom), 8px)); overflow-y:auto; background:var(--cream); }
+  .screen { display:none; position:absolute; inset:0; padding:1.2rem; padding-bottom:calc(8rem + max(env(safe-area-inset-bottom), 8px)); overflow-y:auto; background:var(--cream); }
   .screen.active { display:block; }
 
   /* ── DASHBOARD ── */
@@ -2641,6 +2641,7 @@ function abrirEdicaoContrato(id) {
   document.getElementById('e-f-noiva').value = f.nomeNoiva || '';
   document.getElementById('e-f-noivo').value = f.nomeNoivo || '';
   document.getElementById('e-f-insta').value = f.instagram || '';
+  document.getElementById('e-f-buque').value = f.quemFezBuque || '';
   document.getElementById('e-f-cerimonial').value = f.cerimonialista || '';
   document.getElementById('e-f-indicacao').value = f.quemIndicou || '';
   document.getElementById('e-f-iniciais').value = f.iniciaisData || 'Não';
@@ -2711,6 +2712,7 @@ async function saveEditContrato() {
     nomeNoiva: document.getElementById('e-f-noiva').value,
     nomeNoivo: document.getElementById('e-f-noivo').value,
     instagram: document.getElementById('e-f-insta').value,
+    quemFezBuque: document.getElementById('e-f-buque').value,
     cerimonialista: document.getElementById('e-f-cerimonial').value,
     quemIndicou: document.getElementById('e-f-indicacao').value,
     iniciaisData: document.getElementById('e-f-iniciais').value,
@@ -4128,7 +4130,8 @@ function abrirFichaProducao(id) {
         <textarea id="f-obs-geral" class="field-input" rows="4" placeholder="Flores, cores, detalhes do fundo...">${f.obsGeral || ''}</textarea>
       </div>
 
-      <button class="btn-primary" onclick="salvarEImprimirFicha()">Salvar e Imprimir</button>
+      <button class="btn-primary" onclick="salvarFicha()">💾 Salvar</button>
+      <button class="btn-primary" style="background:rgba(107,143,113,0.12);color:var(--sage);border:1px solid rgba(107,143,113,0.35);margin-top:0.4rem" onclick="imprimirFicha()">🖨️ Imprimir</button>
       <button class="btn-secondary" onclick="closeDrawer('drawer-ficha');if(fichaContratoId)openDetail(fichaContratoId);" style="margin-top:0.4rem">Fechar</button>
     </div>
   `;
@@ -4136,11 +4139,8 @@ function abrirFichaProducao(id) {
   openDrawer('drawer-ficha');
 }
 
-async function salvarEImprimirFicha() {
-  const c = contratos.find(x => x.id === fichaContratoId);
-  if (!c) return;
-
-  const f = {
+function _coletarDadosFicha() {
+  return {
     nomeNoiva: document.getElementById('f-noiva').value,
     nomeNoivo: document.getElementById('f-noivo').value,
     instagram: document.getElementById('f-insta').value,
@@ -4151,14 +4151,32 @@ async function salvarEImprimirFicha() {
     espelhoPresente: document.getElementById('f-espelho').value,
     obsGeral: document.getElementById('f-obs-geral').value
   };
+}
 
+async function salvarFicha() {
+  const c = contratos.find(x => x.id === fichaContratoId);
+  if (!c) return;
+  const f = _coletarDadosFicha();
   try {
     const [r] = await sbUpdate('contratos', c.id, { ficha_producao: f });
     c.ficha_producao = f;
-    gerarImpressaoFicha(c, f);
+    const btn = document.querySelector('#drawer-ficha .btn-primary');
+    if (btn) { const orig = btn.textContent; btn.textContent = '✓ Salvo!'; setTimeout(() => btn.textContent = orig, 1500); }
   } catch(e) {
-    alert('Erro! Verifique se você criou a coluna "ficha_producao" no Supabase. Erro: ' + e.message);
+    alert('Erro ao salvar: ' + e.message);
   }
+}
+
+function imprimirFicha() {
+  const c = contratos.find(x => x.id === fichaContratoId);
+  if (!c) return;
+  const f = _coletarDadosFicha();
+  gerarImpressaoFicha(c, f);
+}
+
+async function salvarEImprimirFicha() {
+  await salvarFicha();
+  imprimirFicha();
 }
 
   function imprimirFichaPeloForm(prefixo) {
