@@ -4572,8 +4572,9 @@ async function renderCentroNotif() {
         id: r.id,
         tipo: 'manual',
         titulo: 'Lembrete',
-        data: r.data_hora ? r.data_hora.slice(0,10) : '',
-        hora: r.data_hora ? r.data_hora.slice(11,16) : '',
+        data: r.data_hora ? (() => { const d = new Date(r.data_hora); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })() : '',
+        hora: r.data_hora ? (() => { const d = new Date(r.data_hora); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); })() : '',
+        dataHoraRaw: r.data_hora,
         texto: r.texto,
         disparada: r.disparada,
       }))
@@ -4586,7 +4587,16 @@ async function renderCentroNotif() {
 
     el.innerHTML = todas.map(n => {
       const dataFmt = n.data ? n.data.split('-').reverse().join('/') : '';
-      const horaFmt = n.hora ? ' · ' + n.hora : '';
+      // Converte hora de UTC para Brasília (UTC-3) para exibição
+      let horaFmt = '';
+      if (n.hora && n.dataHoraRaw) {
+        const dt = new Date(n.dataHoraRaw);
+        const h = String(dt.getHours()).padStart(2,'0');
+        const m = String(dt.getMinutes()).padStart(2,'0');
+        horaFmt = ' · ' + h + ':' + m;
+      } else if (n.hora) {
+        horaFmt = ' · ' + n.hora;
+      }
       const badge = n.tipo === 'manual'
         ? `<span style="font-size:0.6rem;padding:0.15rem 0.45rem;border-radius:20px;background:rgba(107,143,113,0.15);color:var(--sage);border:1px solid rgba(107,143,113,0.3)">${n.disparada ? '✓ enviada' : '⏰ agendada'}</span>`
         : `<span style="font-size:0.6rem;padding:0.15rem 0.45rem;border-radius:20px;background:rgba(184,134,42,0.1);color:var(--brown);border:1px solid rgba(184,134,42,0.2)">automática</span>`;
