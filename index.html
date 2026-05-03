@@ -1292,6 +1292,15 @@
 </div>
 
 <script>
+
+window.onerror = function (msg, url, line, col, error) {
+  alert("ERRO: " + msg + " | Linha: " + line);
+};
+
+  window.addEventListener("unhandledrejection", function (event) {
+  alert("ERRO PROMISE: " + event.reason);
+});
+  
 // ── SUPABASE ──
 const SUPA_URL = 'https://yenxrtmchyyrdcizpzgu.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InllbnhydG1jaHl5cmRjaXpwemd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMjMxOTUsImV4cCI6MjA5MjY5OTE5NX0.BNfU4ONckAVtDGPTpL3gI143ybGaQL54hh9-InMi23U';
