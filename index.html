@@ -1827,13 +1827,21 @@ if (valorFinal < 0) valorFinal = 0;
   };
 
   // valor_bruto = preço de venda (o desconto vai só no pagamento, não no bruto)
-  let valorFinal = valorBruto; // preço cheio de venda
-  // Para misto, valor_bruto = pPix + pCartao (o que a noiva paga)
-  if (formaPag === 'misto') {
-    const pPixMisto = parseFloat(document.getElementById('c-pago-pix').value) || 0;
-    const pCartaoMisto = parseFloat(document.getElementById('c-pago-cartao').value) || 0;
-    valorFinal = round2(pPixMisto + pCartaoMisto);
-  }
+
+  // mantém o valor que já foi calculado acima
+// (valorComForma - desconto)
+
+if (formaPag === 'misto') {
+  const pPixMisto = parseFloat(document.getElementById('pix-misto')?.value) || 0;
+  const pCartaoMisto = parseFloat(document.getElementById('cartao-misto')?.value) || 0;
+
+  let baseMisto = pPixMisto + pCartaoMisto;
+
+  // aplica desconto manual SOBRE o valor já com forma
+  valorFinal = baseMisto - desconto;
+
+  if (valorFinal < 0) valorFinal = 0;
+}
 
   // gerarPagamentosIniciais aplica taxa padrão e depois subtrai o desconto adicional
   const pagamentosIni = gerarPagamentosIniciais(formaPag, valorFinal, contrato, desconto);
