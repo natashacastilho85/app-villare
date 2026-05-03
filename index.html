@@ -2863,15 +2863,33 @@ async function saveEditContrato() {
     obsGeral: document.getElementById('e-f-obs-geral').value
   };
 
+  // Atualiza pagamentos se for misto (preserva pagamentos existentes, adiciona novos se necessário)
+  if (dados.forma_pag === 'misto') {
+    const hoje = new Date().toISOString().split('T')[0];
+    const pPix = parseFloat(document.getElementById('e-pago-pix').value) || 0;
+    const pCartao = parseFloat(document.getElementById('e-pago-cartao').value) || 0;
+    const parc = document.getElementById('e-pago-cartao-parc').value;
+    const novosPags = [];
+    if (pPix > 0) novosPags.push({ data: hoje, valor: pPix, bruto: pPix, forma: 'Pix', status: 'Realizado' });
+    if (pCartao > 0) novosPags.push({ data: hoje, valor: pCartao, bruto: pCartao, forma: 'Cartão', parcelas: parseInt(parc), status: 'Realizado' });
+    if (novosPags.length > 0) {
+      // Mantém pagamentos anteriores e adiciona os novos
+      const existentes = c.pagamentos || [];
+      dados.pagamentos = [...existentes, ...novosPags];
+      dados.pago = round2(dados.pagamentos.reduce((s,p) => s+(parseFloat(p.valor)||0), 0));
+    }
+  }
+
   try {
-    const [atualizado] = await sbUpdate('contratos', contratoEditandoId, dados);
-    const idx = contratos.findIndex(x => x.id === contratoEditandoId);
+    const _idEditado = contratoEditandoId;
+    const [atualizado] = await sbUpdate('contratos', _idEditado, dados);
+    const idx = contratos.findIndex(x => x.id === _idEditado);
     if (idx >= 0) contratos[idx] = mapContrato(atualizado);
+    contratoEditandoId = null;
     closeDrawer('drawer-edit');
     renderAll();
     goTabById('contratos');
-    setTimeout(() => openDetail(contratoEditandoId), 300);
-    contratoEditandoId = null;
+    setTimeout(() => openDetail(_idEditado), 300);
   } catch(e) { 
     alert('Erro ao atualizar: ' + e.message); 
   }
