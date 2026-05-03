@@ -1866,11 +1866,32 @@ function gerarPagamentosIniciais(forma, valor, dataContrato, desconto) {
   const data = dataContrato || new Date().toISOString().split('T')[0];
   const desc = parseFloat(desconto) || 0;
   // desconto é aplicado APÓS a taxa padrão (Pix/cartão)
+  
   if (forma === 'pix') {
-    const pixLiq = round2(round2(valor * (1 - TAXA_PIX_DESC)) - desc);
-    return [{ data, valor: pixLiq, bruto: valor, forma: 'Pix', status: 'Realizado' }];
-  } else if (forma === '3x') {
-    const liq3x = round2(round2(valor * (1 - TAXA_CARTAO_3X)) - desc);
+  return [{
+    data,
+    valor: valor,
+    bruto: valor,
+    forma: 'Pix',
+    status: 'Realizado'
+  }];
+}
+  
+  else if (forma === '3x') {
+    
+    if (forma === '3x') {
+  const parcela = round2(valor / 3);
+
+  return [1,2,3].map(i => ({
+    data,
+    valor: parcela,
+    bruto: parcela,
+    forma: 'Cartão',
+    parcelas: 3,
+    status: 'Realizado'
+  }));
+}
+    
     return [{ data, valor: liq3x, bruto: valor, forma: 'Cartão', parcelas: 3, status: 'Realizado' }];
   } else if (forma === '4x') {
     return [{ data, valor: round2(valor - desc), bruto: valor, forma: 'Cartão', parcelas: 4, status: 'Realizado' }];
