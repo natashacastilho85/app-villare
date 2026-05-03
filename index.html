@@ -1617,7 +1617,21 @@ function goTabById(tab) {
   goTab(tab, navItem);
 }
 
-function openFab() { openDrawer('drawer-new'); }
+function openFab() {
+  // Limpa o formulário antes de abrir
+  ['c-nome','c-telefone','c-casamento','c-contrato','c-cidade','c-estado',
+   'c-desconto','c-pago','c-pago-pix','c-pago-cartao',
+   'c-f-noiva','c-f-noivo','c-f-insta','c-f-buque','c-f-cerimonial','c-f-indicacao','c-f-obs-geral'
+  ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  document.getElementById('c-envio').value = 'Correios';
+  document.getElementById('c-status').value = 'Reserva';
+  document.getElementById('forma-pag-select').value = 'pix';
+  document.getElementById('c-f-iniciais').value = 'Não';
+  document.getElementById('c-f-espelho').value = 'Não';
+  document.getElementById('pecas-selecionadas').innerHTML = '';
+  onFormaPagChange('pix');
+  openDrawer('drawer-new');
+}
 
 // Abre precificação a partir do catálogo:
 // fecha o catalogo VISUALMENTE, mas mantém pushState normal (cria nova entrada)
@@ -1817,7 +1831,8 @@ function gerarPagamentosIniciais(forma, valor, dataContrato) {
   if (forma === 'pix') {
     return [{ data, valor: valor, bruto: valor, forma: 'Pix', status: 'Realizado' }];
   } else if (forma === '3x') {
-    return [{ data, valor: valor, forma: 'Cartão', parcelas: 3, status: 'Realizado' }];
+    const liq3x = round2(valor * (1 - TAXA_CARTAO_3X));
+    return [{ data, valor: liq3x, bruto: valor, forma: 'Cartão', parcelas: 3, status: 'Realizado' }];
   } else if (forma === '4x') {
     return [{ data, valor: valor, forma: 'Cartão', parcelas: 4, status: 'Realizado' }];
   } else if (forma === 'reserva') {
