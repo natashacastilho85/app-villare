@@ -1787,6 +1787,12 @@ async function saveContrato() {
   // Aplica desconto Pix no valorFinal (noiva paga 7% menos)
   let valorFinal = Math.max(0, valorBruto - desconto);
   if (formaPag === 'pix') valorFinal = round2(valorFinal * (1 - TAXA_PIX_DESC));
+  // Para misto, valor_bruto = o que a noiva paga (pPix + pCartao), não o preço cartão
+  if (formaPag === 'misto') {
+    const pPixMisto = parseFloat(document.getElementById('c-pago-pix').value) || 0;
+    const pCartaoMisto = parseFloat(document.getElementById('c-pago-cartao').value) || 0;
+    valorFinal = round2(pPixMisto + pCartaoMisto);
+  }
 
   const pagamentosIni = gerarPagamentosIniciais(formaPag, valorFinal);
 
@@ -2854,6 +2860,11 @@ async function saveEditContrato() {
   dados.pecas = pecasSel;
   let valorFinalEdit = Math.max(0, valorBruto - dados.desconto);
   if (dados.forma_pag === 'pix') valorFinalEdit = round2(valorFinalEdit * (1 - TAXA_PIX_DESC));
+  if (dados.forma_pag === 'misto') {
+    const pPixEdit = parseFloat(document.getElementById('e-pago-pix').value) || 0;
+    const pCartaoEdit = parseFloat(document.getElementById('e-pago-cartao').value) || 0;
+    valorFinalEdit = round2(pPixEdit + pCartaoEdit);
+  }
   dados.valor_bruto = valorFinalEdit;
 
   // Coleta os dados da ficha na edição
