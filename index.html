@@ -2604,13 +2604,13 @@ function renderComparativos() {
 function openDetail(id) {
   const c = contratos.find(x=>x.id===id);
   if (!c) return;
-  const pago = totalPago(c);
-  const saldo = c.valorBruto - pago;
-  const pct = c.valorBruto > 0 ? Math.round(pago/c.valorBruto*100) : 0;
+  const pagoNoiva = totalPago(c);          // bruto: o que a noiva pagou (para calcular saldo)
+  const pagoNoCaixa = totalEntradaCaixa(c); // líquido: o que entrou no seu bolso (para exibir)
+  const saldo = c.valorBruto - pagoNoiva;
+  const pct = c.valorBruto > 0 ? Math.round(pagoNoiva/c.valorBruto*100) : 0;
   const fmtData = s => s ? s.split('-').reverse().join('/') : '—';
   const formaTxt = { pix:'Pix (7% desc. noiva)', '3x':'3× sem juros (7,01%)', '4x':'4× ou mais', reserva:'Reserva antecipada', misto:'Misto (Pix + Cartão)' };
   const telLimpo = (c.telefone||'').replace(/\D/g,'');
-  // Botão do detalhe abre WhatsApp Business sem texto pré-definido (o texto pré-pronto é só na notificação dos 7 dias)
   const linkWaBtn = telLimpo ? `javascript:abrirWhatsBusiness('${telLimpo}')` : '';
   const devedor = isDevedor(c);
 
@@ -2687,7 +2687,7 @@ function openDetail(id) {
     <div class="detail-section">
       <div class="detail-section-title">Pagamento · ${formaTxt[c.formaPag]||c.formaPag}</div>
       <div class="payment-progress" style="margin-bottom:0.6rem"><div class="payment-bar" style="width:${pct}%"></div></div>
-      <div class="detail-row"><span class="dl">Total pago</span><span class="dv" style="color:var(--sage);font-family:'Calibri',serif;font-size:1rem">R$ ${pago.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>
+      <div class="detail-row"><span class="dl">Total recebido no caixa</span><span class="dv" style="color:var(--sage);font-family:'Calibri',serif;font-size:1rem">R$ ${pagoNoCaixa.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>
       <div class="detail-row"><span class="dl" style="color:var(--dark)">Saldo a receber</span><span class="dv" style="color:${saldo>0?(devedor?'var(--bordeaux)':'var(--brown)'):'var(--sage)'};${devedor?'font-weight:600':''}">${saldo>0.01?'R$ '+saldo.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'✓ Quitado'}</span></div>
       ${c.formaPag==='reserva'?`<div class="detail-row"><span class="dl" style="color:var(--muted-light);font-size:0.7rem">Prazo: quitado até 15 dias antes do casamento</span><span class="dv"></span></div>`:''}
       ${mistoHtml}
