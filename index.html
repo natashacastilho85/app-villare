@@ -1822,7 +1822,10 @@ function gerarPagamentosIniciais(forma, valor) {
     const pCartao = parseFloat(document.getElementById('c-pago-cartao').value) || 0;
     const parc = document.getElementById('c-pago-cartao-parc').value;
     const p = [];
-    if (pPix > 0) p.push({ data: hoje, valor: pPix, forma: 'Pix', status: 'Realizado' });
+    if (pPix > 0) {
+      const pixLiquido = round2(pPix * (1 - TAXA_PIX_DESC));
+      p.push({ data: hoje, valor: pixLiquido, bruto: pPix, forma: 'Pix', status: 'Realizado' });
+    }
     if (pCartao > 0) p.push({ data: hoje, valor: pCartao, forma: 'Cartão', parcelas: parc, status: 'Realizado' });
     return p;
   }
@@ -2870,7 +2873,10 @@ async function saveEditContrato() {
     const pCartao = parseFloat(document.getElementById('e-pago-cartao').value) || 0;
     const parc = document.getElementById('e-pago-cartao-parc').value;
     const novosPags = [];
-    if (pPix > 0) novosPags.push({ data: hoje, valor: pPix, bruto: pPix, forma: 'Pix', status: 'Realizado' });
+    if (pPix > 0) {
+      const pixLiquido = round2(pPix * (1 - TAXA_PIX_DESC));
+      novosPags.push({ data: hoje, valor: pixLiquido, bruto: pPix, forma: 'Pix', status: 'Realizado' });
+    }
     if (pCartao > 0) novosPags.push({ data: hoje, valor: pCartao, bruto: pCartao, forma: 'Cartão', parcelas: parseInt(parc), status: 'Realizado' });
     if (novosPags.length > 0) {
       // Mantém pagamentos anteriores e adiciona os novos
