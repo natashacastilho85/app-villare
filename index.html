@@ -1794,6 +1794,25 @@ async function saveContrato() {
     valorBruto += precoCalculado * qtd;
   });
 
+  // 1. valor base já está em valorBruto
+
+let valorComForma = valorBruto;
+
+// 2. aplicar regra da forma de pagamento
+if (formaPag === 'pix') {
+  valorComForma = valorBruto * 0.93;
+}
+
+if (formaPag === '3x') {
+  valorComForma = valorBruto * 1.0701;
+}
+
+// 3. aplicar desconto manual
+let valorFinal = valorComForma - desconto;
+
+// 4. segurança
+if (valorFinal < 0) valorFinal = 0;
+
   // Coleta os dados da ficha com os IDs sincronizados
   const ficha = {
     nomeNoiva: document.getElementById('c-f-noiva').value,
