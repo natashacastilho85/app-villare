@@ -1606,7 +1606,7 @@ function goTab(tab, el) {
   const fab = document.getElementById('fab');
   if (tab in tabsComFab) {
     fab.classList.remove('hidden');
-    fab.onclick = tab === 'gastos' ? () => abrirNovoGasto() : () => openDrawer(tabsComFab[tab]);
+    fab.onclick = tab === 'gastos' ? () => abrirNovoGasto() : () => openFab();
   } else {
     fab.classList.add('hidden');
   }
