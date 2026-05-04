@@ -1887,7 +1887,8 @@ async function saveContrato() {
 
   // valor_bruto = preço de venda (o desconto vai só no pagamento, não no bruto)
   let valorFinal = valorBruto; // preço de venda (soma das peças)
-  const pagamentosIni = gerarPagamentosIniciais(formaPag, valorFinal, contrato, desconto);
+  const baseCalcNovo = round2(valorFinal + acrescimo);
+  const pagamentosIni = gerarPagamentosIniciais(formaPag, baseCalcNovo, contrato, desconto);
 
   try {
     const [novoContrato] = await sbInsert('contratos', {
@@ -2929,16 +2930,22 @@ function openDetail(id) {
       </div>
       ${(() => {
         const desc = parseFloat(c.desconto)||0;
+        const acr = parseFloat(c.acrescimo)||0;
+        const base = round2(c.valorBruto + acr);
         const fmtR = v => 'R$ ' + Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
         let linhas = '';
+        // 1. Acréscimo (antes da taxa)
+        if (acr > 0) {
+          linhas += `<div class="detail-row"><span class="dl" style="color:var(--muted)">Acréscimo</span><span class="dv" style="color:var(--sage)">+ ${fmtR(acr)}</span></div>`;
+        }
+        // 2. Taxa (sobre base = peças + acréscimo)
         if (c.formaPag === 'pix') {
-          const taxaVal = round2(c.valorBruto * TAXA_PIX_DESC);
+          const taxaVal = round2(base * TAXA_PIX_DESC);
           linhas += `<div class="detail-row"><span class="dl" style="color:var(--muted)">Pix (7%)</span><span class="dv" style="color:var(--bordeaux)">− ${fmtR(taxaVal)}</span></div>`;
         } else if (c.formaPag === '3x') {
-          const taxaVal = round2(c.valorBruto * TAXA_CARTAO_3X);
+          const taxaVal = round2(base * TAXA_CARTAO_3X);
           linhas += `<div class="detail-row"><span class="dl" style="color:var(--muted)">Cartão 3× (7,01%)</span><span class="dv" style="color:var(--bordeaux)">− ${fmtR(taxaVal)}</span></div>`;
         } else if (c.formaPag === 'misto' && Array.isArray(c.pagamentos) && c.pagamentos.length) {
-          // Misto: mostra breakdown por forma
           const pPix = c.pagamentos.filter(p=>p.forma==='Pix');
           const pCart = c.pagamentos.filter(p=>p.forma==='Cartão');
           if (pPix.length) {
@@ -2954,12 +2961,9 @@ function openDetail(id) {
             if (taxaCart > 0) linhas += `<div class="detail-row"><span class="dl" style="color:var(--muted)">Cartão 3× (7,01%)</span><span class="dv" style="color:var(--bordeaux)">− ${fmtR(taxaCart)}</span></div>`;
           }
         }
+        // 3. Desconto
         if (desc > 0) {
           linhas += `<div class="detail-row"><span class="dl" style="color:var(--muted)">Desconto</span><span class="dv" style="color:var(--bordeaux)">− ${fmtR(desc)}</span></div>`;
-        }
-        const acr = parseFloat(c.acrescimo) || 0;
-        if (acr > 0) {
-          linhas += `<div class="detail-row"><span class="dl" style="color:var(--muted)">Acréscimo</span><span class="dv" style="color:var(--sage)">+ ${fmtR(acr)}</span></div>`;
         }
         linhas += `<div class="detail-row" style="border-top:1px solid rgba(184,134,42,0.15);padding-top:0.4rem;margin-top:0.2rem">
           <span class="dl" style="color:var(--dark);font-weight:600">Valor a pagar</span>
