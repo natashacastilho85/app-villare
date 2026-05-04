@@ -1797,13 +1797,7 @@ async function saveContrato() {
   };
 
   // valor_bruto = preço de venda (o desconto vai só no pagamento, não no bruto)
-  let valorFinal = valorBruto; // preço de venda (bruto)
-  // Para misto, valor_bruto = pPix + pCartao
-  if (formaPag === 'misto') {
-    const pPixMisto = parseFloat(document.getElementById('c-pago-pix').value) || 0;
-    const pCartaoMisto = parseFloat(document.getElementById('c-pago-cartao').value) || 0;
-    valorFinal = round2(pPixMisto + pCartaoMisto);
-  }
+  let valorFinal = valorBruto; // preço de venda (soma das peças)
   const pagamentosIni = gerarPagamentosIniciais(formaPag, valorFinal, contrato, desconto);
 
   try {
@@ -2613,21 +2607,17 @@ function openDetail(id) {
   else if (c.formaPag === '4x') valorAPagar = round2(c.valorBruto - desconto);
   else if (c.formaPag === 'reserva') valorAPagar = c.valorBruto;
   else if (c.formaPag === 'misto') {
-    if (Array.isArray(c.pagamentos) && c.pagamentos.length) {
-      // Total bruto - taxa pix - taxa cartão - desconto
-      const totalBrutoMisto = c.pagamentos.reduce((s,p) => s + (parseFloat(p.bruto)||parseFloat(p.valor)||0), 0);
-      const taxaPix = c.pagamentos.filter(p=>p.forma==='Pix').reduce((s,p) => {
-        const b = parseFloat(p.bruto)||parseFloat(p.valor)||0;
-        return s + round2(b * TAXA_PIX_DESC);
-      }, 0);
-      const taxaCart = c.pagamentos.filter(p=>p.forma==='Cartão' && (!p.parcelas||p.parcelas<=3)).reduce((s,p) => {
-        const b = parseFloat(p.bruto)||parseFloat(p.valor)||0;
-        return s + round2(b * TAXA_CARTAO_3X);
-      }, 0);
-      valorAPagar = round2(totalBrutoMisto - taxaPix - taxaCart - desconto);
-    } else {
-      valorAPagar = c.valorBruto;
-    }
+    // Misto: valor_bruto = preço cheio das peças
+    // Valor a pagar = valor_bruto - taxas dos pagamentos já feitos - desconto
+    const taxaPix = (c.pagamentos||[]).filter(p=>p.forma==='Pix').reduce((s,p) => {
+      const b = parseFloat(p.bruto)||parseFloat(p.valor)||0;
+      return s + round2(b * TAXA_PIX_DESC);
+    }, 0);
+    const taxaCart = (c.pagamentos||[]).filter(p=>p.forma==='Cartão'&&(!p.parcelas||p.parcelas<=3)).reduce((s,p) => {
+      const b = parseFloat(p.bruto)||parseFloat(p.valor)||0;
+      return s + round2(b * TAXA_CARTAO_3X);
+    }, 0);
+    valorAPagar = round2(c.valorBruto - taxaPix - taxaCart - desconto);
   }
   const saldo = round2(valorAPagar - pagoNoCaixa);
   const pct = valorAPagar > 0 ? Math.round(pagoNoCaixa/valorAPagar*100) : 0;
@@ -2936,12 +2926,7 @@ async function saveEditContrato() {
     valorBruto += precoCalculado * qtd;
   });
   dados.pecas = pecasSel;
-  let valorFinalEdit = valorBruto; // preço de venda (bruto)
-  if (dados.forma_pag === 'misto') {
-    const pPixEdit = parseFloat(document.getElementById('e-pago-pix').value) || 0;
-    const pCartaoEdit = parseFloat(document.getElementById('e-pago-cartao').value) || 0;
-    valorFinalEdit = round2(pPixEdit + pCartaoEdit);
-  }
+  let valorFinalEdit = valorBruto; // preço de venda (soma das peças)
   dados.valor_bruto = valorFinalEdit;
 
   // Coleta os dados da ficha na edição
