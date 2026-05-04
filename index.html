@@ -2607,10 +2607,16 @@ function renderComparativos() {
 function openDetail(id) {
   const c = contratos.find(x=>x.id===id);
   if (!c) return;
-  const pagoNoiva = totalPago(c);          // bruto: o que a noiva pagou (para calcular saldo)
-  const pagoNoCaixa = totalEntradaCaixa(c); // líquido: o que entrou no seu bolso (para exibir)
-  const saldo = c.valorBruto - pagoNoiva;
-  const pct = c.valorBruto > 0 ? Math.round(pagoNoiva/c.valorBruto*100) : 0;
+  const pagoNoCaixa = totalPago(c); // o que a noiva pagou (após taxa e desconto)
+  // Calcula o valor que a noiva deveria pagar (para saldo correto)
+  const desconto = parseFloat(c.desconto) || 0;
+  let valorAPagar = c.valorBruto;
+  if (c.formaPag === 'pix') valorAPagar = round2(round2(c.valorBruto * (1 - TAXA_PIX_DESC)) - desconto);
+  else if (c.formaPag === '3x') valorAPagar = round2(round2(c.valorBruto * (1 - TAXA_CARTAO_3X)) - desconto);
+  else if (c.formaPag === '4x') valorAPagar = round2(c.valorBruto - desconto);
+  else if (c.formaPag === 'reserva' || c.formaPag === 'misto') valorAPagar = c.valorBruto;
+  const saldo = round2(valorAPagar - pagoNoCaixa);
+  const pct = valorAPagar > 0 ? Math.round(pagoNoCaixa/valorAPagar*100) : 0;
   const fmtData = s => s ? s.split('-').reverse().join('/') : '—';
   const formaTxt = { pix:'Pix (7% desc. noiva)', '3x':'3× sem juros (7,01%)', '4x':'4× ou mais', reserva:'Reserva antecipada', misto:'Misto (Pix + Cartão)' };
   const telLimpo = (c.telefone||'').replace(/\D/g,'');
@@ -2680,19 +2686,42 @@ function openDetail(id) {
         const vUnit = (parseFloat(p.valor)||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
         const vTotal = ((parseFloat(p.valor)||0)*(parseInt(p.qtd)||1)).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
         return `<div class="detail-row">
-          <span class="dl">${p.qtd}× ${p.nome}</span>
+          <span class="dl">${p.qtd>1?p.qtd+'× ':''} ${p.nome}</span>
           <span class="dv" style="text-align:right;line-height:1.5">
             ${p.qtd>1?`<span style="font-size:0.68rem;color:var(--muted)">R$ ${vUnit} × ${p.qtd}</span><br>`:''}R$ ${vTotal}
           </span>
         </div>`;
       }).join('')}
-      <div class="detail-row" style="padding-top:0.4rem"><span class="dl" style="color:var(--dark)">Total</span><span class="dv" style="color:var(--brown);font-family:'Calibri',serif;font-size:1.1rem">R$ ${c.valorBruto.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>
+      <div class="detail-row" style="padding-top:0.4rem;border-top:1px solid rgba(184,134,42,0.15)">
+        <span class="dl" style="color:var(--dark)">Total</span>
+        <span class="dv" style="color:var(--dark);font-family:'Calibri',serif;font-size:1.05rem">R$ ${c.valorBruto.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+      </div>
+      ${(() => {
+        const desc = parseFloat(c.desconto)||0;
+        const fmtR = v => 'R$ ' + Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+        let linhas = '';
+        if (c.formaPag === 'pix') {
+          const taxaVal = round2(c.valorBruto * TAXA_PIX_DESC);
+          linhas += `<div class="detail-row"><span class="dl" style="color:var(--muted)">Pix (7%)</span><span class="dv" style="color:var(--bordeaux)">− ${fmtR(taxaVal)}</span></div>`;
+        } else if (c.formaPag === '3x') {
+          const taxaVal = round2(c.valorBruto * TAXA_CARTAO_3X);
+          linhas += `<div class="detail-row"><span class="dl" style="color:var(--muted)">Cartão 3× (7,01%)</span><span class="dv" style="color:var(--bordeaux)">− ${fmtR(taxaVal)}</span></div>`;
+        }
+        if (desc > 0) {
+          linhas += `<div class="detail-row"><span class="dl" style="color:var(--muted)">Desconto</span><span class="dv" style="color:var(--bordeaux)">− ${fmtR(desc)}</span></div>`;
+        }
+        linhas += `<div class="detail-row" style="border-top:1px solid rgba(184,134,42,0.15);padding-top:0.4rem;margin-top:0.2rem">
+          <span class="dl" style="color:var(--dark);font-weight:600">Valor a pagar</span>
+          <span class="dv" style="color:var(--brown);font-family:'Calibri',serif;font-size:1.1rem">R$ ${valorAPagar.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+        </div>`;
+        return linhas;
+      })()}
     </div>
     <div class="detail-section">
       <div class="detail-section-title">Pagamento · ${formaTxt[c.formaPag]||c.formaPag}</div>
       <div class="payment-progress" style="margin-bottom:0.6rem"><div class="payment-bar" style="width:${pct}%"></div></div>
       <div class="detail-row"><span class="dl">Total recebido</span><span class="dv" style="color:var(--sage);font-family:'Calibri',serif;font-size:1rem">R$ ${pagoNoCaixa.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></div>
-      <div class="detail-row"><span class="dl" style="color:var(--dark)">Saldo a receber</span><span class="dv" style="color:${saldo>0?(devedor?'var(--bordeaux)':'var(--brown)'):'var(--sage)'};${devedor?'font-weight:600':''}">${saldo>0.01?'R$ '+saldo.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'✓ Quitado'}</span></div>
+      <div class="detail-row"><span class="dl" style="color:var(--dark)">Saldo a receber</span><span class="dv" style="color:${saldo>0.01?(devedor?'var(--bordeaux)':'var(--brown)'):'var(--sage)'};${devedor?'font-weight:600':''}">${saldo>0.01?'R$ '+saldo.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}):'✓ Quitado'}</span></div>
       ${c.formaPag==='reserva'?`<div class="detail-row"><span class="dl" style="color:var(--muted-light);font-size:0.7rem">Prazo: quitado até 15 dias antes do casamento</span><span class="dv"></span></div>`:''}
       ${mistoHtml}
       ${pagsHtml ? `<div style="margin-top:0.6rem;padding-top:0.6rem;border-top:1px solid rgba(184,134,42,0.12)"><div style="font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.4rem">Histórico</div>${pagsHtml}</div>`:''}
