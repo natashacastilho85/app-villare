@@ -1902,7 +1902,8 @@ function gerarPagamentosIniciais(forma, valor, dataContrato, desconto) {
     const parc = document.getElementById('c-pago-cartao-parc').value;
     const p = [];
     if (pPix > 0) {
-      const pixLiquido = round2(pPix * (1 - TAXA_PIX_DESC));
+      const valorComForma = round2(valor * (1 - TAXA_PIX_DESC));
+const pixLiq = round2(valorComForma - desc);
       p.push({ data, valor: pixLiquido, bruto: pPix, forma: 'Pix', status: 'Realizado' });
     }
     if (pCartao > 0) {
