@@ -1804,8 +1804,8 @@ if (formaPag === 'pix') {
 }
 
 if (formaPag === '3x') {
-  valorComForma = valorBruto * 1.0701;
-}
+  valorComForma = valorBruto * (1 - 0.0701);
+  }
 
 // 3. aplicar desconto manual
 let valorFinal = valorComForma - desconto;
