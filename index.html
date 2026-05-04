@@ -1726,9 +1726,14 @@ window.addEventListener('popstate', () => {
     }
     if (_drawerStack.length === 0) _zDrawerAtual = 200;
     else _zDrawerAtual = Math.max(200, _zDrawerAtual - 10);
-    // Se fechou a ficha de produção, reabre o detalhe do contrato
+    // Se fechou a ficha de produção, reabre o detalhe do contrato SEM novo pushState
     if (id === 'drawer-ficha' && fichaContratoId) {
-      setTimeout(() => openDetail(fichaContratoId), 50);
+      setTimeout(() => {
+        openDetail(fichaContratoId);
+        // openDetail chama openDrawer que faz pushState — substitui por replaceState
+        // para manter histórico alinhado (1 entrada = 1 drawer aberto)
+        history.replaceState({ villare: 'root' }, '');
+      }, 50);
     }
   }
   history.replaceState({ villare: 'root' }, '');
