@@ -1846,6 +1846,13 @@ if (formaPag === 'misto') {
   // gerarPagamentosIniciais aplica taxa padrão e depois subtrai o desconto adicional
   const pagamentosIni = gerarPagamentosIniciais(formaPag, valorFinal, contrato, desconto);
 
+alert(
+  "Bruto: " + valorBruto +
+  "\nForma: " + valorComForma +
+  "\nDesc: " + desconto +
+  "\nFinal: " + valorFinal
+);
+  
   try {
     const [novoContrato] = await sbInsert('contratos', {
       nome, status, casamento, contrato, cidade, estado, envio, telefone,
