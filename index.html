@@ -1868,12 +1868,10 @@ function gerarPagamentosIniciais(forma, valor, dataContrato, desconto) {
   // desconto é aplicado APÓS a taxa padrão (Pix/cartão)
   
   if (forma === 'pix') {
-  const valorComForma = round2(valor * (1 - TAXA_PIX_DESC)); // 7%
-  const valorFinal = round2(valorComForma - desc);
 
   return [{
     data,
-    valor: valorFinal,
+    valor: valor,
     bruto: valor,
     forma: 'Pix',
     status: 'Realizado'
@@ -1883,12 +1881,10 @@ function gerarPagamentosIniciais(forma, valor, dataContrato, desconto) {
   else if (forma === '3x') {
     
     if (forma === '3x') {
-  const valorComForma = round2(valor * (1 - TAXA_CARTAO_3X)); // sua taxa 7,01%
-  const valorFinal = round2(valorComForma - desc);
 
   return [{
     data,
-    valor: valorFinal,
+    valor: valor,
     bruto: valor,
     forma: 'Cartão',
     parcelas: 3,
