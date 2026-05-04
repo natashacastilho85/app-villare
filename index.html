@@ -2692,7 +2692,7 @@ function openDetail(id) {
       }).join('')}
       <div class="detail-row" style="padding-top:0.4rem;border-top:1px solid rgba(184,134,42,0.15)">
         <span class="dl" style="color:var(--dark)">Total</span>
-        <span class="dv" style="color:var(--dark);font-family:'Calibri',serif;font-size:1.05rem">R$ ${c.valorBruto.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
+        <span class="dv" style="color:var(--dark);font-family:'Calibri',serif;font-size:1.05rem">R$ ${c.pecas.reduce((s,p)=>s+((parseFloat(p.valor)||0)*(parseInt(p.qtd)||1)),0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</span>
       </div>
       ${(() => {
         const desc = parseFloat(c.desconto)||0;
