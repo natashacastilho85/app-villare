@@ -1367,13 +1367,10 @@ function totalEntradaCaixa(c) {
   return parseFloat(c.pago) || 0;
 }
 
-// Soma BRUTA por forma de pagamento (para misto)
+// Soma por forma de pagamento (valor líquido = o que a noiva pagou)
 function totalPagoPorForma(c, forma) {
   if (!Array.isArray(c.pagamentos)) return 0;
-  return c.pagamentos.filter(p=>p.forma===forma).reduce((s,p) => {
-    const b = (p.bruto !== undefined && p.bruto !== null) ? parseFloat(p.bruto) : parseFloat(p.valor);
-    return s + (b || 0);
-  }, 0);
+  return c.pagamentos.filter(p=>p.forma===forma).reduce((s,p) => s + (parseFloat(p.valor)||0), 0);
 }
 
 // Verifica se a noiva está devedora (reserva antecipada não quitada faltando 15 dias ou menos)
@@ -2178,7 +2175,7 @@ function renderFinanceiro() {
   const todosPags = contratos
     .filter(c=>c.status!=='Cancelado')
     .flatMap(pagamentosDoContrato)
-    .filter(p => p.data && p.data.startsWith(ano));
+    .filter(p => p.data && p.data.startsWith(ano) && typeof p.data === 'string');
 
   const gastos2026 = gastos.filter(g=>g.data.startsWith(ano));
 
@@ -2614,7 +2611,8 @@ function openDetail(id) {
   if (c.formaPag === 'pix') valorAPagar = round2(round2(c.valorBruto * (1 - TAXA_PIX_DESC)) - desconto);
   else if (c.formaPag === '3x') valorAPagar = round2(round2(c.valorBruto * (1 - TAXA_CARTAO_3X)) - desconto);
   else if (c.formaPag === '4x') valorAPagar = round2(c.valorBruto - desconto);
-  else if (c.formaPag === 'reserva' || c.formaPag === 'misto') valorAPagar = c.valorBruto;
+  else if (c.formaPag === 'reserva') valorAPagar = c.valorBruto;
+  else if (c.formaPag === 'misto') valorAPagar = pagoNoCaixa; // misto: valor a pagar = o que já foi combinado
   const saldo = round2(valorAPagar - pagoNoCaixa);
   const pct = valorAPagar > 0 ? Math.round(pagoNoCaixa/valorAPagar*100) : 0;
   const fmtData = s => s ? s.split('-').reverse().join('/') : '—';
@@ -2706,6 +2704,22 @@ function openDetail(id) {
         } else if (c.formaPag === '3x') {
           const taxaVal = round2(c.valorBruto * TAXA_CARTAO_3X);
           linhas += `<div class="detail-row"><span class="dl" style="color:var(--muted)">Cartão 3× (7,01%)</span><span class="dv" style="color:var(--bordeaux)">− ${fmtR(taxaVal)}</span></div>`;
+        } else if (c.formaPag === 'misto' && Array.isArray(c.pagamentos) && c.pagamentos.length) {
+          // Misto: mostra breakdown por forma
+          const pPix = c.pagamentos.filter(p=>p.forma==='Pix');
+          const pCart = c.pagamentos.filter(p=>p.forma==='Cartão');
+          if (pPix.length) {
+            const brutoPix = pPix.reduce((s,p)=>(s + (parseFloat(p.bruto)||parseFloat(p.valor)||0)),0);
+            const liqPix = pPix.reduce((s,p)=>s+(parseFloat(p.valor)||0),0);
+            const taxaPix = round2(brutoPix - liqPix);
+            if (taxaPix > 0) linhas += `<div class="detail-row"><span class="dl" style="color:var(--muted)">Pix (7%)</span><span class="dv" style="color:var(--bordeaux)">− ${fmtR(taxaPix)}</span></div>`;
+          }
+          if (pCart.length) {
+            const brutoCart = pCart.reduce((s,p)=>(s + (parseFloat(p.bruto)||parseFloat(p.valor)||0)),0);
+            const liqCart = pCart.reduce((s,p)=>s+(parseFloat(p.valor)||0),0);
+            const taxaCart = round2(brutoCart - liqCart);
+            if (taxaCart > 0) linhas += `<div class="detail-row"><span class="dl" style="color:var(--muted)">Cartão 3× (7,01%)</span><span class="dv" style="color:var(--bordeaux)">− ${fmtR(taxaCart)}</span></div>`;
+          }
         }
         if (desc > 0) {
           linhas += `<div class="detail-row"><span class="dl" style="color:var(--muted)">Desconto</span><span class="dv" style="color:var(--bordeaux)">− ${fmtR(desc)}</span></div>`;
