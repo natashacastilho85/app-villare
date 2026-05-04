@@ -2050,8 +2050,19 @@ function statusEfetivo(c) {
 
 function contratoCardHTML(c) {
   const pago = totalPago(c);
-  const saldo = c.valorBruto - pago;
-  const pct = c.valorBruto > 0 ? Math.round(pago/c.valorBruto*100) : 0;
+  // Calcula valorAPagar igual ao detalhe (para saldo correto no card)
+  const desc = parseFloat(c.desconto)||0;
+  let valorAPagarCard = c.valorBruto;
+  if (c.formaPag === 'pix') valorAPagarCard = round2(round2(c.valorBruto * (1 - TAXA_PIX_DESC)) - desc);
+  else if (c.formaPag === '3x') valorAPagarCard = round2(round2(c.valorBruto * (1 - TAXA_CARTAO_3X)) - desc);
+  else if (c.formaPag === '4x') valorAPagarCard = round2(c.valorBruto - desc);
+  else if (c.formaPag === 'misto') {
+    const taxaPix = (c.pagamentos||[]).filter(p=>p.forma==='Pix').reduce((s,p)=>s+round2((parseFloat(p.bruto)||parseFloat(p.valor)||0)*TAXA_PIX_DESC),0);
+    const taxaCart = (c.pagamentos||[]).filter(p=>p.forma==='Cartão'&&(!p.parcelas||p.parcelas<=3)).reduce((s,p)=>s+round2((parseFloat(p.bruto)||parseFloat(p.valor)||0)*TAXA_CARTAO_3X),0);
+    valorAPagarCard = round2(c.valorBruto - taxaPix - taxaCart - desc);
+  }
+  const saldo = round2(valorAPagarCard - pago);
+  const pct = valorAPagarCard > 0 ? Math.round(pago/valorAPagarCard*100) : 0;
   const [y,m,d] = c.casamento.split('-');
   const pecasStr = c.pecas.map(p => {
     const vTotal = ((parseFloat(p.valor)||0)*(parseInt(p.qtd)||1)).toLocaleString('pt-BR',{minimumFractionDigits:0});
