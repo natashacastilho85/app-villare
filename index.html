@@ -2691,10 +2691,17 @@ function gerarRelatorio() {
   // Resumo financeiro
   var totalBruto = 0, totalRecebido = 0, totalSaldo = 0;
   filtrados.forEach(function(c) {
-    var bruto    = parseFloat(c.valorBruto) || 0;
-    var pago     = totalPago(c);
-    var saldo    = Math.max(0, round2(bruto - pago));
-    totalBruto    += bruto;
+    var acr      = parseFloat(c.acrescimo) || 0;
+    var desc     = parseFloat(c.desconto) || 0;
+    var base     = round2((parseFloat(c.valorBruto) || 0) + acr);
+    var vAPagar;
+    if (c.formaPag === 'pix')      vAPagar = round2(round2(base * (1 - TAXA_PIX_DESC)) - desc);
+    else if (c.formaPag === '3x')  vAPagar = round2(round2(base * (1 - TAXA_CARTAO_3X)) - desc);
+    else if (c.formaPag === '4x')  vAPagar = round2(base - desc);
+    else                           vAPagar = base;
+    var pago   = totalPago(c);
+    var saldo  = Math.max(0, round2(vAPagar - pago));
+    totalBruto    += vAPagar;
     totalRecebido += pago;
     totalSaldo    += saldo;
   });
@@ -2723,9 +2730,16 @@ function gerarRelatorio() {
       '<div style="text-align:center;padding:1.5rem;color:var(--muted);font-style:italic;font-family:\'Calibri\',serif;font-size:0.9rem">Nenhum contrato encontrado.</div>';
   } else {
     document.getElementById('rel-lista').innerHTML = filtrados.map(function(c) {
+      var acr    = parseFloat(c.acrescimo) || 0;
+      var desc   = parseFloat(c.desconto) || 0;
+      var base   = round2((parseFloat(c.valorBruto) || 0) + acr);
+      var vAP;
+      if (c.formaPag === 'pix')      vAP = round2(round2(base * (1 - TAXA_PIX_DESC)) - desc);
+      else if (c.formaPag === '3x')  vAP = round2(round2(base * (1 - TAXA_CARTAO_3X)) - desc);
+      else if (c.formaPag === '4x')  vAP = round2(base - desc);
+      else                           vAP = base;
       var pago   = totalPago(c);
-      var bruto  = parseFloat(c.valorBruto) || 0;
-      var saldo  = Math.max(0, round2(bruto - pago));
+      var saldo  = Math.max(0, round2(vAP - pago));
       var quitado = saldo <= 0;
       var casFmt = (c.casamento||'').split('-').reverse().join('/');
       var fecFmt = (c.contrato||'').slice(0,10).split('-').reverse().join('/');
@@ -2735,7 +2749,7 @@ function gerarRelatorio() {
           '<div style="font-size:0.75rem;color:var(--muted);margin-top:0.15rem">💒 ' + casFmt + ' &nbsp;·&nbsp; 📄 ' + fecFmt + '</div>' +
         '</div>' +
         '<div style="text-align:right;flex-shrink:0">' +
-          '<div style="font-family:\'Calibri\',serif;font-size:0.95rem;color:var(--brown)">' + fmtR(bruto) + '</div>' +
+          '<div style="font-family:\'Calibri\',serif;font-size:0.95rem;color:var(--brown)">' + fmtR(vAP) + '</div>' +
           '<div style="font-size:0.75rem;color:' + (quitado ? '#2e7d5e' : 'var(--bordeaux)') + ';margin-top:0.1rem">' +
             (quitado ? 'Quitado ✓' : 'Saldo ' + fmtR(saldo)) +
           '</div>' +
