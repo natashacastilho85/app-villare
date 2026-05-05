@@ -2691,14 +2691,18 @@ function gerarRelatorio() {
   // Resumo financeiro
   var totalBruto = 0, totalRecebido = 0, totalSaldo = 0;
   filtrados.forEach(function(c) {
-    var acr      = parseFloat(c.acrescimo) || 0;
-    var desc     = parseFloat(c.desconto) || 0;
-    var base     = round2((parseFloat(c.valorBruto) || 0) + acr);
+    var acr    = parseFloat(c.acrescimo) || 0;
+    var desc   = parseFloat(c.desconto) || 0;
+    var base   = round2((parseFloat(c.valorBruto) || 0) + acr);
     var vAPagar;
     if (c.formaPag === 'pix')      vAPagar = round2(round2(base * (1 - TAXA_PIX_DESC)) - desc);
     else if (c.formaPag === '3x')  vAPagar = round2(round2(base * (1 - TAXA_CARTAO_3X)) - desc);
     else if (c.formaPag === '4x')  vAPagar = round2(base - desc);
-    else                           vAPagar = base;
+    else if (c.formaPag === 'misto') {
+      var taxaPix  = (c.pagamentos||[]).filter(function(p){return p.forma==='Pix';}).reduce(function(s,p){return s+round2((parseFloat(p.bruto)||parseFloat(p.valor)||0)*TAXA_PIX_DESC);},0);
+      var taxaCart = (c.pagamentos||[]).filter(function(p){return p.forma==='Cartão'&&(!p.parcelas||p.parcelas<=3);}).reduce(function(s,p){return s+round2((parseFloat(p.bruto)||parseFloat(p.valor)||0)*TAXA_CARTAO_3X);},0);
+      vAPagar = round2(base - taxaPix - taxaCart - desc);
+    } else vAPagar = base;
     var pago   = totalPago(c);
     var saldo  = Math.max(0, round2(vAPagar - pago));
     totalBruto    += vAPagar;
@@ -2737,7 +2741,11 @@ function gerarRelatorio() {
       if (c.formaPag === 'pix')      vAP = round2(round2(base * (1 - TAXA_PIX_DESC)) - desc);
       else if (c.formaPag === '3x')  vAP = round2(round2(base * (1 - TAXA_CARTAO_3X)) - desc);
       else if (c.formaPag === '4x')  vAP = round2(base - desc);
-      else                           vAP = base;
+      else if (c.formaPag === 'misto') {
+        var taxaPix  = (c.pagamentos||[]).filter(function(p){return p.forma==='Pix';}).reduce(function(s,p){return s+round2((parseFloat(p.bruto)||parseFloat(p.valor)||0)*TAXA_PIX_DESC);},0);
+        var taxaCart = (c.pagamentos||[]).filter(function(p){return p.forma==='Cartão'&&(!p.parcelas||p.parcelas<=3);}).reduce(function(s,p){return s+round2((parseFloat(p.bruto)||parseFloat(p.valor)||0)*TAXA_CARTAO_3X);},0);
+        vAP = round2(base - taxaPix - taxaCart - desc);
+      } else vAP = base;
       var pago   = totalPago(c);
       var saldo  = Math.max(0, round2(vAP - pago));
       var quitado = saldo <= 0;
