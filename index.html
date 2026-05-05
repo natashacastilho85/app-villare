@@ -2608,10 +2608,21 @@ function getMeses2026() {
   return mesesNomes.map(function(_, i) {
     var m = String(i+1).padStart(2,'0');
     var cts = contratos.filter(function(c) { return c.status !== 'Cancelado'; });
+    // Faturamento = total efetivamente recebido no mês (por data do pagamento)
+    var recebidoMes = 0;
+    cts.forEach(function(c) {
+      (c.pagamentos||[]).forEach(function(p) {
+        if ((p.data||'').startsWith('2026-'+m)) recebidoMes += parseFloat(p.valor)||0;
+      });
+      // Contratos sem array de pagamentos mas com pago
+      if ((!c.pagamentos||!c.pagamentos.length) && (c.pago||0) > 0) {
+        if ((c.contrato||'').startsWith('2026-'+m)) recebidoMes += parseFloat(c.pago)||0;
+      }
+    });
     return {
-      noivas: cts.filter(function(c) { return c.casamento.startsWith('2026-'+m); }).length,
-      contratos: cts.filter(function(c) { return c.contrato.startsWith('2026-'+m); }).length,
-      faturamento: cts.filter(function(c) { return c.contrato.startsWith('2026-'+m); }).reduce(function(s,c) { return s+c.valorBruto; }, 0)
+      noivas: cts.filter(function(c) { return c.casamento && c.casamento.startsWith('2026-'+m); }).length,
+      contratos: cts.filter(function(c) { return c.contrato && c.contrato.startsWith('2026-'+m); }).length,
+      faturamento: recebidoMes
     };
   });
 }
@@ -2805,17 +2816,18 @@ function renderComparativos() {
   buildCompTable('comp-thead-fat',    'comp-tbody-fat',    'comp-tfoot-fat',    anos, 'faturamento', fmtFat);
   buildCompTable('comp-thead-cont',   'comp-tbody-cont',   'comp-tfoot-cont',   anos, 'contratos', fmtN);
 
-  // Peças por ano
+  // Peças por ano — todos os anos via c.casamento
   var todosAnos = [2022, 2023, 2024, 2025, 2026];
   var pecasAnos = {};
-  todosAnos.forEach(function(ano) {
-    pecasAnos[ano] = {};
-    if (ano === 2026) {
-      contratos.filter(function(c) { return c.status !== 'Cancelado' && c.contrato.startsWith('2026'); })
-        .forEach(function(c) { c.pecas.forEach(function(p) { pecasAnos[ano][p.nome] = (pecasAnos[ano][p.nome]||0)+p.qtd; }); });
-    }
-    // anos anteriores zerados por enquanto
-  });
+  todosAnos.forEach(function(ano) { pecasAnos[ano] = {}; });
+  contratos.filter(function(c) { return c.status !== 'Cancelado'; })
+    .forEach(function(c) {
+      var ano = parseInt((c.casamento||'').slice(0,4));
+      if (!pecasAnos[ano]) return;
+      (c.pecas||[]).forEach(function(p) {
+        pecasAnos[ano][p.nome] = (pecasAnos[ano][p.nome]||0) + (parseInt(p.qtd)||1);
+      });
+    });
 
   var thead = '<tr><th class="ctab-th-mes">Pe\u00e7a</th>';
   todosAnos.forEach(function(a) { thead += '<th class="ctab-th-ano">'+a+'</th>'; });
@@ -2833,14 +2845,18 @@ function renderComparativos() {
   });
   document.getElementById('comp-tbody-pecas').innerHTML = tbody;
 
-  // Estados e cidades (2026 automático)
+  // Estados e cidades — todos os contratos ativos
   var estados = {};
   var cidades = {};
-  contratos.filter(function(c) { return c.status !== 'Cancelado' && c.contrato.startsWith('2026'); })
+  contratos.filter(function(c) { return c.status !== 'Cancelado'; })
     .forEach(function(c) {
-      estados[c.estado] = (estados[c.estado]||0)+1;
-      var k = c.cidade+' \u00b7 '+c.estado;
-      cidades[k] = (cidades[k]||0)+1;
+      var est = (c.estado||'').trim().toUpperCase();
+      var cid = (c.cidade||'').trim().replace(/\b\w/g, function(l) { return l.toUpperCase(); });
+      if (est) estados[est] = (estados[est]||0) + 1;
+      if (cid && est) {
+        var k = cid + ' · ' + est;
+        cidades[k] = (cidades[k]||0) + 1;
+      }
     });
 
   var rankEst = Object.entries(estados).sort(function(a,b) { return b[1]-a[1]; });
