@@ -3979,8 +3979,10 @@ function renderPrecCard(p, d, valorHora, custoFixoHora, cardIdx) {
 
     <!-- HEADER: nome + ações -->
     <div class="prec-peca-header">
-      <span class="prec-peca-nome" onclick="openPeca(${p.id})" style="cursor:pointer" title="Editar nome">${p.nome} ✏️</span>
-      ${p.desc ? `<div style="font-size:0.72rem;color:var(--muted);margin-top:0.15rem;line-height:1.3">${p.desc}</div>` : ''}
+      <div style="display:flex;flex-direction:column;gap:0.1rem">
+        <span class="prec-peca-nome" onclick="openPeca(${p.id})" style="cursor:pointer" title="Editar nome">${p.nome} ✏️</span>
+        ${p.desc ? `<div style="font-size:0.8rem;color:var(--muted);line-height:1.3">${p.desc}</div>` : ''}
+      </div>
       <div style="display:flex;align-items:center;gap:0.5rem">
         <button onclick="duplicarPecaPrec(${p.id})" title="Duplicar" style="background:none;border:none;color:var(--brown);font-size:1rem;cursor:pointer;padding:0.2rem">📋</button>
         <button onclick="excluirPecaPrec(${p.id})" title="Excluir" style="background:none;border:none;color:var(--bordeaux);font-size:1rem;cursor:pointer;padding:0.2rem">🗑️</button>
