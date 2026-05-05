@@ -4839,6 +4839,30 @@ function gerarImpressaoFicha(c, f) {
   
 initApp();
 
+// ── NOTIF PUSH: detecta ?contrato=ID ao abrir pelo clique na notificação ──
+(function detectarAberturaPorContrato() {
+  const params = new URLSearchParams(window.location.search);
+  const cId = parseInt(params.get('contrato') || '');
+  if (!cId) return;
+
+  // Limpa a URL
+  const url = new URL(window.location.href);
+  url.searchParams.delete('contrato');
+  history.replaceState({}, '', url.toString());
+
+  // Aguarda contratos carregarem e abre o detalhe
+  function tentarAbrir(tentativas) {
+    const c = (window._contratos || contratos || []).find(x => x.id === cId);
+    if (c) {
+      setTimeout(() => openDetail(cId), 300);
+    } else if (tentativas > 0) {
+      setTimeout(() => tentarAbrir(tentativas - 1), 500);
+    }
+  }
+  // Tenta após o app carregar (até 5 segundos)
+  setTimeout(() => tentarAbrir(10), 500);
+})();
+
 // ── NOTIF PUSH: detecta ?wa=ID ao abrir pelo clique na notificação ──
 // Mostra um botão flutuante — o toque nele é gesto real, permitindo abrir WA Business no Android.
 (function detectarAberturaPorNotificacao() {
