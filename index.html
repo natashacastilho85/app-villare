@@ -1619,17 +1619,33 @@ function renderMetricas() {
     const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
     const ctrsAtivos = contratos.filter(c => c && c.status !== 'Cancelado');
 
-    // Faturamento do mês atual - Blindado contra datas vazias
+    // Função local para calcular valorAPagar real de um contrato
+    const calcVAP = (c) => {
+      const acr  = parseFloat(c.acrescimo) || 0;
+      const desc = parseFloat(c.desconto)  || 0;
+      const base = round2((parseFloat(c.valorBruto) || 0) + acr);
+      if (c.formaPag === 'pix')      return round2(round2(base * (1 - TAXA_PIX_DESC)) - desc);
+      if (c.formaPag === '3x')       return round2(round2(base * (1 - TAXA_CARTAO_3X)) - desc);
+      if (c.formaPag === '4x')       return round2(base - desc);
+      if (c.formaPag === 'misto') {
+        const taxaPix  = (c.pagamentos||[]).filter(p=>p.forma==='Pix').reduce((s,p)=>s+round2((parseFloat(p.bruto)||parseFloat(p.valor)||0)*TAXA_PIX_DESC),0);
+        const taxaCart = (c.pagamentos||[]).filter(p=>p.forma==='Cartão'&&(!p.parcelas||p.parcelas<=3)).reduce((s,p)=>s+round2((parseFloat(p.bruto)||parseFloat(p.valor)||0)*TAXA_CARTAO_3X),0);
+        return round2(base - taxaPix - taxaCart - desc);
+      }
+      return base;
+    };
+
+    // Faturamento do mês atual
     const fat = ctrsAtivos
       .filter(c => c.contrato && typeof c.contrato === 'string' && c.contrato.startsWith(ano + '-' + mesAtual))
-      .reduce((s, c) => s + (parseFloat(c.valorBruto) || 0), 0);
+      .reduce((s, c) => s + calcVAP(c), 0);
 
     const nMes = ctrsAtivos.filter(c => c.contrato && typeof c.contrato === 'string' && c.contrato.startsWith(ano + '-' + mesAtual)).length;
 
-    // A receber - Blindado contra erros de cálculo
+    // A receber
     const aReceber = ctrsAtivos.reduce((s, c) => {
-      const bruto = parseFloat(c.valorBruto) || 0;
-      return s + (bruto - totalPago(c));
+      const vap = calcVAP(c);
+      return s + Math.max(0, round2(vap - totalPago(c)));
     }, 0);
 
     const elFat = document.getElementById('metric-faturamento');
