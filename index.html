@@ -2851,7 +2851,9 @@ function renderComparativos() {
   contratos.filter(function(c) { return c.status !== 'Cancelado'; })
     .forEach(function(c) {
       var est = (c.estado||'').trim().toUpperCase();
-      var cid = (c.cidade||'').trim().replace(/\b\w/g, function(l) { return l.toUpperCase(); });
+      var cid = (c.cidade||'').trim().split(' ').map(function(w) {
+        return w.length ? w[0].toUpperCase() + w.slice(1).toLowerCase() : w;
+      }).join(' ');
       if (est) estados[est] = (estados[est]||0) + 1;
       if (cid && est) {
         var k = cid + ' · ' + est;
