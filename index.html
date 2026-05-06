@@ -3045,24 +3045,32 @@ function renderComparativos() {
     });
 
   var anoAtualPecas = new Date().getFullYear();
-  var theadPecas = '<tr><th class="ctab-th-mes" style="text-align:left">Peça</th>';
-  anosTabPecas.forEach(function(a) {
-    var s = a === anoAtualPecas ? 'color:var(--gold);font-weight:700;' : '';
-    theadPecas += '<th class="ctab-th-ano" style="'+s+'">'+a+'</th>';
+  // Header: anos na linha, peças nas colunas
+  var theadPecas = '<tr><th class="ctab-th-mes" style="text-align:left;white-space:nowrap">Ano</th>';
+  pecas.forEach(function(p) {
+    theadPecas += '<th class="ctab-th-ano" style="font-size:0.6rem;white-space:nowrap;padding:0.5rem 0.4rem">'+p.nome+'</th>';
   });
+  theadPecas += '<th class="ctab-th-ano" style="color:var(--brown)">Total</th>';
   theadPecas += '</tr>';
   document.getElementById('comp-thead-pecas').innerHTML = theadPecas;
 
+  // Rows: uma linha por ano
   var tbodyPecas = '';
-  pecas.forEach(function(p) {
-    tbodyPecas += '<tr>';
-    tbodyPecas += '<td class="ctab-td-mes" style="font-size:0.82rem;white-space:nowrap">'+p.nome+'</td>';
-    anosTabPecas.forEach(function(ano) {
+  anosTabPecas.forEach(function(ano) {
+    var isAtual = ano === anoAtualPecas;
+    var trStyle = isAtual ? 'background:rgba(184,134,42,0.06);' : '';
+    var anoStyle = isAtual ? 'color:var(--gold);font-weight:700;' : '';
+    tbodyPecas += '<tr style="'+trStyle+'">';
+    tbodyPecas += '<td class="ctab-td-mes" style="font-size:0.85rem;'+anoStyle+'">'+ano+'</td>';
+    var total = 0;
+    pecas.forEach(function(p) {
       var v = pecasAnos[ano][p.nome] || 0;
-      var isAtual = ano === anoAtualPecas;
-      var s = isAtual ? 'color:var(--brown);font-weight:600;' : '';
-      tbodyPecas += '<td class="ctab-td-val'+(v===0?' zero':'')+'" style="'+s+'">'+fmtN(v)+'</td>';
+      total += v;
+      var s = isAtual ? 'color:var(--brown-mid);font-weight:600;' : '';
+      tbodyPecas += '<td class="ctab-td-val'+(v===0?' zero':'')+'" style="padding:0.45rem 0.4rem;font-size:0.82rem;'+s+'">'+fmtN(v)+'</td>';
     });
+    var totStyle = isAtual ? 'color:var(--gold);font-weight:700;' : 'color:var(--brown);';
+    tbodyPecas += '<td class="ctab-td-val" style="padding:0.45rem 0.6rem;font-size:0.82rem;border-left:1px solid rgba(184,134,42,0.15);'+totStyle+'">'+fmtN(total)+'</td>';
     tbodyPecas += '</tr>';
   });
   document.getElementById('comp-tbody-pecas').innerHTML = tbodyPecas;
