@@ -434,6 +434,30 @@
   .processos-toggle { display: none !important; }
   .processos-content { display: block !important; }
 }
+
+/* ── CSS RESPONSIVO ABA DADOS ── */
+
+/* Mobile: tudo empilhado */
+.dados-topo          { display:flex; flex-direction:column; gap:1rem; margin-bottom:0.5rem; }
+.dados-pesquisa-wrap { width:100%; }
+.dados-metricas-wrap { width:100%; }
+.dados-metricas-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; }
+.dados-2col          { display:flex; flex-direction:column; gap:1rem; margin-top:1rem; }
+.dados-tabela-wrap   { overflow-x:auto; border-radius:8px; border:1px solid rgba(184,134,42,0.15); background:white; box-shadow:0 1px 6px rgba(42,26,14,0.05); }
+.dados-tabela        { border-collapse:collapse; width:auto; }
+.dados-tabela thead th:first-child,
+.dados-tabela tbody td:first-child { position:sticky; left:0; background:white; z-index:2; box-shadow:1px 0 0 rgba(184,134,42,0.12); }
+
+/* Desktop: layout otimizado */
+@media (min-width: 1024px) {
+  .dados-topo          { flex-direction:row; align-items:flex-start; gap:1.5rem; }
+  .dados-pesquisa-wrap { flex:0 0 320px; }
+  .dados-metricas-wrap { flex:1; }
+  .dados-metricas-grid { grid-template-columns:repeat(4,auto); gap:0.6rem; }
+  .dados-2col          { flex-direction:row; gap:1.5rem; }
+  .dados-2col > div    { flex:1; min-width:0; }
+  .dados-tabela        { width:100%; }
+}
    
 /* --- AJUSTE GLOBAL PC (VILLARE ATELIER) --- */
 @media (min-width: 1024px) {
@@ -691,11 +715,11 @@
     <!-- COMPARATIVOS -->
     <div class="screen" id="screen-comparativos">
 
-      <!-- LAYOUT DESKTOP: 2 colunas -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start">
+      <!-- TOPO: Pesquisa + Cards (desktop: flex row; mobile: coluna) -->
+      <div class="dados-topo">
 
-        <!-- COLUNA ESQUERDA: Pesquisa -->
-        <div>
+        <!-- Pesquisa -->
+        <div class="dados-pesquisa-wrap">
           <div class="section-title">Pesquisar contratos</div>
           <div style="background:white;border:1px solid rgba(184,134,42,0.16);border-radius:10px;padding:0.85rem;box-shadow:0 1px 6px rgba(42,26,14,0.06)">
             <div style="display:flex;gap:0.4rem;margin-bottom:0.7rem">
@@ -726,13 +750,13 @@
           </div>
         </div>
 
-        <!-- COLUNA DIREITA: Visão geral -->
-        <div>
+        <!-- Visão geral -->
+        <div class="dados-metricas-wrap">
           <div class="section-title">Visão geral</div>
-          <div id="cards-metricas" style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem"></div>
+          <div id="cards-metricas" class="dados-metricas-grid"></div>
         </div>
 
-      </div><!-- fim grid 2 colunas -->
+      </div>
 
       <!-- Resultado da pesquisa -->
       <div id="rel-resultado" style="display:none;margin-top:1rem">
@@ -741,72 +765,62 @@
         <div id="rel-lista"></div>
       </div>
 
-      <!-- Gráficos lado a lado -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.2rem">
-        <div>
-          <div class="section-title">Recebido por mês</div>
-          <div style="background:white;border:1px solid rgba(184,134,42,0.15);border-radius:8px;padding:1rem;box-shadow:0 1px 6px rgba(42,26,14,0.05);overflow-x:auto">
-            <div id="grafico-fat"></div>
-          </div>
-        </div>
-        <div>
-          <div class="section-title">Noivas por mês</div>
-          <div style="background:white;border:1px solid rgba(184,134,42,0.15);border-radius:8px;padding:1rem;box-shadow:0 1px 6px rgba(42,26,14,0.05);overflow-x:auto">
-            <div id="grafico-noivas"></div>
-          </div>
-        </div>
+      <!-- Gráficos (desktop: um embaixo do outro full; mobile: idem) -->
+      <div class="section-title" style="margin-top:1.2rem">Recebido por mês</div>
+      <div style="background:white;border:1px solid rgba(184,134,42,0.15);border-radius:8px;padding:1rem;margin-bottom:1rem;box-shadow:0 1px 6px rgba(42,26,14,0.05);overflow-x:auto">
+        <div id="grafico-fat"></div>
+      </div>
+      <div class="section-title">Noivas por mês</div>
+      <div style="background:white;border:1px solid rgba(184,134,42,0.15);border-radius:8px;padding:1rem;margin-bottom:1rem;box-shadow:0 1px 6px rgba(42,26,14,0.05);overflow-x:auto">
+        <div id="grafico-noivas"></div>
       </div>
 
-      <!-- Tabelas lado a lado: Recebido + Noivas -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.2rem">
-        <div>
-          <div class="section-title">Recebido por mês</div>
-          <div style="overflow-x:auto;border-radius:8px;border:1px solid rgba(184,134,42,0.15);background:white;box-shadow:0 1px 6px rgba(42,26,14,0.05)">
-            <table style="border-collapse:collapse;width:100%">
-              <thead id="comp-thead-fat"></thead>
-              <tbody id="comp-tbody-fat"></tbody>
-              <tfoot id="comp-tfoot-fat"></tfoot>
-            </table>
-          </div>
-        </div>
+      <!-- Tabela Recebido (sozinha) -->
+      <div class="section-title">Recebido por mês</div>
+      <div class="dados-tabela-wrap" style="margin-bottom:1rem">
+        <table class="dados-tabela">
+          <thead id="comp-thead-fat"></thead>
+          <tbody id="comp-tbody-fat"></tbody>
+          <tfoot id="comp-tfoot-fat"></tfoot>
+        </table>
+      </div>
+
+      <!-- Noivas + Contratos lado a lado (desktop) / empilhados (mobile) -->
+      <div class="dados-2col">
         <div>
           <div class="section-title">Noivas por mês</div>
-          <div style="overflow-x:auto;border-radius:8px;border:1px solid rgba(184,134,42,0.15);background:white;box-shadow:0 1px 6px rgba(42,26,14,0.05)">
-            <table style="border-collapse:collapse;width:100%">
+          <div class="dados-tabela-wrap">
+            <table class="dados-tabela">
               <thead id="comp-thead-noivas"></thead>
               <tbody id="comp-tbody-noivas"></tbody>
               <tfoot id="comp-tfoot-noivas"></tfoot>
             </table>
           </div>
         </div>
-      </div>
-
-      <!-- Tabelas lado a lado: Contratos + Peças -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem">
         <div>
           <div class="section-title">Contratos por mês</div>
-          <div style="overflow-x:auto;border-radius:8px;border:1px solid rgba(184,134,42,0.15);background:white;box-shadow:0 1px 6px rgba(42,26,14,0.05)">
-            <table style="border-collapse:collapse;width:100%">
+          <div class="dados-tabela-wrap">
+            <table class="dados-tabela">
               <thead id="comp-thead-cont"></thead>
               <tbody id="comp-tbody-cont"></tbody>
               <tfoot id="comp-tfoot-cont"></tfoot>
             </table>
           </div>
         </div>
-        <div>
-          <div class="section-title">Peças vendidas por ano</div>
-          <div style="overflow-x:auto;border-radius:8px;border:1px solid rgba(184,134,42,0.15);background:white;box-shadow:0 1px 6px rgba(42,26,14,0.05)">
-            <table style="border-collapse:collapse;width:100%">
-              <thead id="comp-thead-pecas"></thead>
-              <tbody id="comp-tbody-pecas"></tbody>
-            </table>
-          </div>
-        </div>
       </div>
 
-      <!-- Origem -->
-      <div class="section-title" style="margin-top:1rem">Origem das noivas · todos os anos</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+      <!-- Peças (sozinha) -->
+      <div class="section-title" style="margin-top:1rem">Peças vendidas por ano</div>
+      <div class="dados-tabela-wrap" style="margin-bottom:1rem">
+        <table class="dados-tabela">
+          <thead id="comp-thead-pecas"></thead>
+          <tbody id="comp-tbody-pecas"></tbody>
+        </table>
+      </div>
+
+      <!-- Origem (desktop: lado a lado; mobile: empilhado) -->
+      <div class="section-title">Origem das noivas · todos os anos</div>
+      <div class="dados-2col" style="margin-bottom:1rem">
         <div class="comp-card">
           <div class="comp-card-title">Por estado</div>
           <div id="comp-estados"></div>
@@ -815,7 +829,7 @@
           <div class="comp-card-title">Top 10 cidades</div>
           <div id="comp-cidades"></div>
         </div>
-      </div><!-- fim grid origem -->
+      </div>
 
     </div><!-- fim screen-comparativos -->
 
@@ -2973,7 +2987,7 @@ function renderComparativos() {
         svg += '</rect>';
       }
       var labelX = grpX + grpW/2;
-      svg += '<text x="'+labelX+'" y="'+(svgH-8)+'" text-anchor="middle" font-size="11" fill="#9a7d65" font-family="Calibri,sans-serif">'+mesesAbrev[m]+'</text>';
+      svg += '<text x="'+labelX+'" y="'+(svgH-8)+'" text-anchor="middle" font-size="13" fill="#9a7d65" font-family="Calibri,sans-serif" font-weight="500">'+mesesAbrev[m]+'</text>';
     }
     svg += '</svg>';
 
