@@ -761,7 +761,7 @@
       <div id="cards-metricas" style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:1.2rem"></div>
 
       <!-- Gráficos -->
-      <div class="section-title">Faturamento recebido por mês</div>
+      <div class="section-title">Recebido por mês</div>
       <div style="background:white;border:1px solid rgba(184,134,42,0.15);border-radius:8px;padding:1rem;margin-bottom:1rem;box-shadow:0 1px 6px rgba(42,26,14,0.05);overflow-x:auto">
         <div id="grafico-fat"></div>
       </div>
@@ -782,7 +782,7 @@
       </div>
 
       <!-- Faturamento -->
-      <div class="section-title" style="margin-top:1rem">Faturamento por mês</div>
+      <div class="section-title" style="margin-top:1rem">Recebido por mês</div>
       <div style="overflow-x:auto;border-radius:8px;border:1px solid rgba(184,134,42,0.15);background:white;box-shadow:0 1px 6px rgba(42,26,14,0.05);margin-bottom:0.2rem">
         <table style="border-collapse:collapse;min-width:100%">
           <thead id="comp-thead-fat"></thead>
@@ -2950,24 +2950,22 @@ function renderComparativos() {
     });
     var maxVal = Math.max.apply(null, dados.map(function(d){ return Math.max.apply(null,d); })) || 1;
     var nAnos = anosGraf.length;
-    var barW = 10; // largura de cada barra
-    var gap  = 3;  // gap entre barras do mesmo grupo
-    var grpW = nAnos * barW + (nAnos-1) * gap; // largura do grupo
-    var grpGap = 18; // gap entre grupos (meses)
+    var barW = 10;
+    var gap  = 3;
+    var grpW = nAnos * barW + (nAnos-1) * gap;
+    var grpGap = 18;
     var totalW = 12 * (grpW + grpGap) + 40;
-    var h = 140; // altura útil do gráfico
+    var h = 140;
     var padL = 8, padT = 10, padB = 30;
     var svgH = h + padT + padB;
 
     var svg = '<svg viewBox="0 0 '+totalW+' '+svgH+'" xmlns="http://www.w3.org/2000/svg" style="min-width:'+totalW+'px;width:100%;max-width:'+totalW+'px">';
 
-    // Linhas de grade
     [0.25,0.5,0.75,1].forEach(function(pct) {
       var y = padT + h - h*pct;
       svg += '<line x1="'+padL+'" y1="'+y+'" x2="'+(totalW-4)+'" y2="'+y+'" stroke="rgba(184,134,42,0.1)" stroke-width="1"/>';
     });
 
-    // Barras
     for (var m=0; m<12; m++) {
       var grpX = padL + m * (grpW + grpGap);
       for (var a=0; a<nAnos; a++) {
@@ -2977,28 +2975,18 @@ function renderComparativos() {
         var y = padT + h - barH;
         var cor = coresAnos[anosGraf[a]];
         var ano = anosGraf[a];
-        var anoAtualGraf = new Date().getFullYear();
         var opacity = ano === 2022 ? '0.4' : '1';
         svg += '<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+barH+'" fill="'+cor+'" opacity="'+opacity+'" rx="2">';
         if (v > 0) svg += '<title>'+ano+' · '+mesesAbrev[m]+': '+fmtTooltip(v)+'</title>';
         svg += '</rect>';
       }
-      // Label do mês
       var labelX = grpX + grpW/2;
       svg += '<text x="'+labelX+'" y="'+(svgH-8)+'" text-anchor="middle" font-size="9" fill="#9a7d65" font-family="Calibri,sans-serif">'+mesesAbrev[m]+'</text>';
     }
-
-    // Legenda
-    var legX = padL;
-    anosAnos = anosGraf;
-    svg += '<g transform="translate(0,'+(svgH-18)+')">';
-    // Vai embaixo do gráfico como texto — colocamos acima na verdade
-    svg += '</g>';
-
     svg += '</svg>';
 
-    // Legenda HTML
-    var legHTML = '<div style="display:flex;gap:0.8rem;flex-wrap:wrap;margin-top:0.5rem;padding-left:'+padL+'px">';
+    // Legenda FORA do scroll, fixa acima
+    var legHTML = '<div style="display:flex;gap:0.8rem;flex-wrap:wrap;margin-bottom:0.5rem">';
     anosGraf.forEach(function(ano) {
       var opacity = ano === 2022 ? '0.5' : '1';
       legHTML += '<div style="display:flex;align-items:center;gap:0.25rem;opacity:'+opacity+'">'+
@@ -3007,8 +2995,9 @@ function renderComparativos() {
       '</div>';
     });
     legHTML += '</div>';
+    legHTML += '<div style="overflow-x:auto">'+svg+'</div>';
 
-    el.innerHTML = svg + legHTML;
+    el.innerHTML = legHTML;
   }
 
   renderGrafico('grafico-fat', 'faturamento', function(v){ return 'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); });
