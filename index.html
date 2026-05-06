@@ -760,6 +760,17 @@
       <div class="section-title">Visão geral</div>
       <div id="cards-metricas" style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem;margin-bottom:1.2rem"></div>
 
+      <!-- Gráficos -->
+      <div class="section-title">Faturamento recebido por mês</div>
+      <div style="background:white;border:1px solid rgba(184,134,42,0.15);border-radius:8px;padding:1rem;margin-bottom:1rem;box-shadow:0 1px 6px rgba(42,26,14,0.05);overflow-x:auto">
+        <div id="grafico-fat"></div>
+      </div>
+
+      <div class="section-title">Noivas por mês</div>
+      <div style="background:white;border:1px solid rgba(184,134,42,0.15);border-radius:8px;padding:1rem;margin-bottom:1rem;box-shadow:0 1px 6px rgba(42,26,14,0.05);overflow-x:auto">
+        <div id="grafico-noivas"></div>
+      </div>
+
       <!-- Noivas -->
       <div class="section-title">Noivas por mês</div>
       <div style="overflow-x:auto;border-radius:8px;border:1px solid rgba(184,134,42,0.15);background:white;box-shadow:0 1px 6px rgba(42,26,14,0.05);margin-bottom:0.2rem">
@@ -2878,22 +2889,39 @@ function renderComparativos() {
   }).join('');
 
   // Prazo médio fechamento → casamento
-  var prazosFec = ctrsAtivos.filter(function(c){return c.contrato&&c.casamento;}).map(function(c){
-    return (new Date(c.casamento+'T12:00:00') - new Date(c.contrato.slice(0,10)+'T12:00:00')) / 86400000;
-  }).filter(function(d){return d>0;});
-  var mediaFec = prazosFec.length ? Math.round(prazosFec.reduce(function(s,d){return s+d;},0)/prazosFec.length) : null;
-
   // Prazo médio de produção (chegada do buquê → entrega da peça)
   var prazosProd = ctrsAtivos.filter(function(c){return c.chegada&&c.entrega;}).map(function(c){
     return (new Date(c.entrega+'T12:00:00') - new Date(c.chegada+'T12:00:00')) / 86400000;
   }).filter(function(d){return d>=0;});
   var mediaProd = prazosProd.length ? Math.round(prazosProd.reduce(function(s,d){return s+d;},0)/prazosProd.length) : null;
 
+  // Prazo separado: antes vs depois do casamento
+  var antesDosCas  = ctrsAtivos.filter(function(c){return c.contrato&&c.casamento;}).map(function(c){
+    return (new Date(c.casamento+'T12:00:00') - new Date(c.contrato.slice(0,10)+'T12:00:00')) / 86400000;
+  });
+  var antes  = antesDosCas.filter(function(d){return d>0;});
+  var depois = antesDosCas.filter(function(d){return d<=0;}).map(function(d){return Math.abs(d);});
+  var mediaAntes  = antes.length  ? Math.round(antes.reduce(function(s,d){return s+d;},0)/antes.length)  : null;
+  var mediaDepois = depois.length ? Math.round(depois.reduce(function(s,d){return s+d;},0)/depois.length) : null;
+
+  var prazoHTML =
+    '<div style="display:flex;flex-direction:column;gap:0.4rem;margin-top:0.3rem">' +
+      (mediaAntes!==null  ? '<div style="font-size:0.78rem;color:var(--sage)">⬆️ Antes do casamento: <strong>'+mediaAntes+' dias</strong> <span style="color:var(--muted)">('+antes.length+' noivas)</span></div>' : '') +
+      (mediaDepois!==null ? '<div style="font-size:0.78rem;color:var(--bordeaux)">⬇️ Após o casamento: <strong>'+mediaDepois+' dias</strong> <span style="color:var(--muted)">('+depois.length+' noivas)</span></div>' : '') +
+    '</div>';
+
   function cardMetrica(icone, titulo, valor, sub) {
     return '<div style="background:white;border:1px solid rgba(184,134,42,0.16);border-radius:10px;padding:0.9rem 1rem;box-shadow:0 1px 6px rgba(42,26,14,0.05)">'+
       '<div style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.3rem">'+icone+' '+titulo+'</div>'+
       '<div style="font-family:Calibri,serif;font-size:1.2rem;color:var(--brown);font-weight:600">'+valor+'</div>'+
       (sub?'<div style="font-size:0.7rem;color:var(--muted);margin-top:0.2rem">'+sub+'</div>':'')+
+    '</div>';
+  }
+
+  function cardMetricaHTML(icone, titulo, conteudo) {
+    return '<div style="background:white;border:1px solid rgba(184,134,42,0.16);border-radius:10px;padding:0.9rem 1rem;box-shadow:0 1px 6px rgba(42,26,14,0.05)">'+
+      '<div style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.3rem">'+icone+' '+titulo+'</div>'+
+      conteudo+
     '</div>';
   }
 
@@ -2905,9 +2933,86 @@ function renderComparativos() {
         '<div style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.4rem">📊 Formas de pagamento</div>'+
         formasHTML+
       '</div>'+
-      cardMetrica('📅','Prazo médio fechamento → casamento', mediaFec!==null?mediaFec+' dias':'—', prazosFec.length+' contratos com datas') +
+      cardMetricaHTML('📅','Fechamento vs casamento', prazoHTML) +
       cardMetrica('🧵','Prazo médio de produção', mediaProd!==null?mediaProd+' dias':'—', prazosProd.length+' peças entregues');
   }
+
+  // ── GRÁFICOS ──
+  var coresAnos = { 2022:'#c4a98e', 2023:'#6b8f71', 2024:'#b8862a', 2025:'#7a2535', 2026:'#5c3318' };
+  var mesesAbrev = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+
+  function renderGrafico(elId, campo, fmtTooltip) {
+    var el = document.getElementById(elId);
+    if (!el) return;
+    var anosGraf = [2022,2023,2024,2025,2026];
+    var dados = anosGraf.map(function(ano) {
+      return getMesesAno(ano).map(function(m) { return m[campo]||0; });
+    });
+    var maxVal = Math.max.apply(null, dados.map(function(d){ return Math.max.apply(null,d); })) || 1;
+    var nAnos = anosGraf.length;
+    var barW = 10; // largura de cada barra
+    var gap  = 3;  // gap entre barras do mesmo grupo
+    var grpW = nAnos * barW + (nAnos-1) * gap; // largura do grupo
+    var grpGap = 18; // gap entre grupos (meses)
+    var totalW = 12 * (grpW + grpGap) + 40;
+    var h = 140; // altura útil do gráfico
+    var padL = 8, padT = 10, padB = 30;
+    var svgH = h + padT + padB;
+
+    var svg = '<svg viewBox="0 0 '+totalW+' '+svgH+'" xmlns="http://www.w3.org/2000/svg" style="min-width:'+totalW+'px;width:100%;max-width:'+totalW+'px">';
+
+    // Linhas de grade
+    [0.25,0.5,0.75,1].forEach(function(pct) {
+      var y = padT + h - h*pct;
+      svg += '<line x1="'+padL+'" y1="'+y+'" x2="'+(totalW-4)+'" y2="'+y+'" stroke="rgba(184,134,42,0.1)" stroke-width="1"/>';
+    });
+
+    // Barras
+    for (var m=0; m<12; m++) {
+      var grpX = padL + m * (grpW + grpGap);
+      for (var a=0; a<nAnos; a++) {
+        var v = dados[a][m];
+        var barH = Math.max(v > 0 ? 2 : 0, Math.round(v/maxVal*h));
+        var x = grpX + a*(barW+gap);
+        var y = padT + h - barH;
+        var cor = coresAnos[anosGraf[a]];
+        var ano = anosGraf[a];
+        var anoAtualGraf = new Date().getFullYear();
+        var opacity = ano === 2022 ? '0.4' : '1';
+        svg += '<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+barH+'" fill="'+cor+'" opacity="'+opacity+'" rx="2">';
+        if (v > 0) svg += '<title>'+ano+' · '+mesesAbrev[m]+': '+fmtTooltip(v)+'</title>';
+        svg += '</rect>';
+      }
+      // Label do mês
+      var labelX = grpX + grpW/2;
+      svg += '<text x="'+labelX+'" y="'+(svgH-8)+'" text-anchor="middle" font-size="9" fill="#9a7d65" font-family="Calibri,sans-serif">'+mesesAbrev[m]+'</text>';
+    }
+
+    // Legenda
+    var legX = padL;
+    anosAnos = anosGraf;
+    svg += '<g transform="translate(0,'+(svgH-18)+')">';
+    // Vai embaixo do gráfico como texto — colocamos acima na verdade
+    svg += '</g>';
+
+    svg += '</svg>';
+
+    // Legenda HTML
+    var legHTML = '<div style="display:flex;gap:0.8rem;flex-wrap:wrap;margin-top:0.5rem;padding-left:'+padL+'px">';
+    anosGraf.forEach(function(ano) {
+      var opacity = ano === 2022 ? '0.5' : '1';
+      legHTML += '<div style="display:flex;align-items:center;gap:0.25rem;opacity:'+opacity+'">'+
+        '<div style="width:10px;height:10px;border-radius:2px;background:'+coresAnos[ano]+'"></div>'+
+        '<span style="font-size:0.7rem;color:var(--muted)">'+ano+'</span>'+
+      '</div>';
+    });
+    legHTML += '</div>';
+
+    el.innerHTML = svg + legHTML;
+  }
+
+  renderGrafico('grafico-fat', 'faturamento', function(v){ return 'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); });
+  renderGrafico('grafico-noivas', 'noivas', function(v){ return v+' noivas'; });
 
   buildCompTable('comp-thead-noivas', 'comp-tbody-noivas', 'comp-tfoot-noivas', anos, 'noivas',    fmtN);
   buildCompTable('comp-thead-fat',    'comp-tbody-fat',    'comp-tfoot-fat',    anos, 'faturamento', fmtFat);
