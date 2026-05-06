@@ -819,7 +819,7 @@
       </div>
 
       <!-- Origem (desktop: lado a lado; mobile: empilhado) -->
-      <div class="section-title">Origem das noivas · todos os anos</div>
+      <div class="section-title">Origem das noivas · 2026</div>
       <div class="dados-2col" style="margin-bottom:1rem">
         <div class="comp-card">
           <div class="comp-card-title">Por estado</div>
@@ -3013,39 +3013,65 @@ function renderComparativos() {
   buildCompTable('comp-thead-fat',    'comp-tbody-fat',    'comp-tfoot-fat',    anos, 'faturamento', fmtFat);
   buildCompTable('comp-thead-cont',   'comp-tbody-cont',   'comp-tfoot-cont',   anos, 'contratos', fmtN);
 
-  // Peças por ano — todos os anos via c.casamento
-  var todosAnos = [2022, 2023, 2024, 2025, 2026];
+  // Peças por ano — dados históricos 2024/2025 + 2026 via contratos
+  var pecasHist = {
+    2024: {
+      'Hexágono Petit':10,'Esfera 12cm':4,'Coração':11,'Hexágono Large':10,'Quadrado Midi':4,
+      'Retângulo Fine':2,'Retângulo Voluma':6,'Quadrado':5,'Lapela':1,'Porta Alianças Irregular':1,
+      'Quadrado Gran':2,'Chaveiro':38,'Mini Coração P':4,'Mini Coração G':4,'Placa Noiva':8,
+      'Porta Copos P':6,'Porta Copos G':3,'Cubo':4,'Bandeja':8,'Porta Velas':4,
+      'Kit Copos P + Cubo':1,'Kit Cubo + Placa':0,'Kit Copos P + Placa':0,'Personalização':0
+    },
+    2025: {
+      'Hexágono Petit':1,'Esfera 12cm':6,'Coração':8,'Hexágono Large':10,'Quadrado Midi':1,
+      'Retângulo Fine':2,'Retângulo Voluma':5,'Quadrado':2,'Lapela':0,'Porta Alianças Irregular':0,
+      'Quadrado Gran':6,'Chaveiro':11,'Mini Coração P':0,'Mini Coração G':0,'Placa Noiva':3,
+      'Porta Copos P':0,'Porta Copos G':2,'Cubo':1,'Bandeja':5,'Porta Velas':4,
+      'Kit Copos P + Cubo':0,'Kit Cubo + Placa':0,'Kit Copos P + Placa':0,'Personalização':12
+    }
+  };
+  var anosTabPecas = [2024, 2025, 2026];
   var pecasAnos = {};
-  todosAnos.forEach(function(ano) { pecasAnos[ano] = {}; });
+  anosTabPecas.forEach(function(ano) {
+    pecasAnos[ano] = ano === 2026 ? {} : (pecasHist[ano] || {});
+  });
   contratos.filter(function(c) { return c.status !== 'Cancelado'; })
     .forEach(function(c) {
       var ano = parseInt((c.casamento||'').slice(0,4));
-      if (!pecasAnos[ano]) return;
+      if (ano !== 2026) return;
       (c.pecas||[]).forEach(function(p) {
-        pecasAnos[ano][p.nome] = (pecasAnos[ano][p.nome]||0) + (parseInt(p.qtd)||1);
+        pecasAnos[2026][p.nome] = (pecasAnos[2026][p.nome]||0) + (parseInt(p.qtd)||1);
       });
     });
 
-  var thead = '<tr><th class="ctab-th-mes">Pe\u00e7a</th>';
-  todosAnos.forEach(function(a) { thead += '<th class="ctab-th-ano">'+a+'</th>'; });
-  thead += '</tr>';
-  document.getElementById('comp-thead-pecas').innerHTML = thead;
-
-  var tbody = '';
-  pecas.forEach(function(p) {
-    tbody += '<tr><td class="ctab-td-mes" style="font-size:0.82rem">'+p.nome+'</td>';
-    todosAnos.forEach(function(ano) {
-      var v = pecasAnos[ano][p.nome] || 0;
-      tbody += '<td class="ctab-td-val'+(v===0?' zero':'')+'">'+fmtN(v)+'</td>';
-    });
-    tbody += '</tr>';
+  var anoAtualPecas = new Date().getFullYear();
+  var theadPecas = '<tr><th class="ctab-th-mes" style="text-align:left">Peça</th>';
+  anosTabPecas.forEach(function(a) {
+    var s = a === anoAtualPecas ? 'color:var(--gold);font-weight:700;' : '';
+    theadPecas += '<th class="ctab-th-ano" style="'+s+'">'+a+'</th>';
   });
-  document.getElementById('comp-tbody-pecas').innerHTML = tbody;
+  theadPecas += '</tr>';
+  document.getElementById('comp-thead-pecas').innerHTML = theadPecas;
+
+  var tbodyPecas = '';
+  pecas.forEach(function(p) {
+    tbodyPecas += '<tr>';
+    tbodyPecas += '<td class="ctab-td-mes" style="font-size:0.82rem;white-space:nowrap">'+p.nome+'</td>';
+    anosTabPecas.forEach(function(ano) {
+      var v = pecasAnos[ano][p.nome] || 0;
+      var isAtual = ano === anoAtualPecas;
+      var s = isAtual ? 'color:var(--brown);font-weight:600;' : '';
+      tbodyPecas += '<td class="ctab-td-val'+(v===0?' zero':'')+'" style="'+s+'">'+fmtN(v)+'</td>';
+    });
+    tbodyPecas += '</tr>';
+  });
+  document.getElementById('comp-tbody-pecas').innerHTML = tbodyPecas;
 
   // Estados e cidades — todos os contratos ativos
   var estados = {};
   var cidades = {};
-  contratos.filter(function(c) { return c.status !== 'Cancelado'; })
+  var anoAtualOrigem = String(new Date().getFullYear());
+  contratos.filter(function(c) { return c.status !== 'Cancelado' && (c.contrato||'').startsWith(anoAtualOrigem); })
     .forEach(function(c) {
       var est = (c.estado||'').trim().toUpperCase();
       var cid = (c.cidade||'').trim().split(' ').map(function(w) {
