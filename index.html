@@ -3462,7 +3462,16 @@ async function saveEditContrato() {
     valorBruto += precoCalculado * qtd;
   });
   dados.pecas = pecasSel;
-  let valorFinalEdit = valorBruto; // preço de venda (soma das peças)
+
+  // PROTEÇÃO: só recalcula valor_bruto se as peças mudaram em relação ao original
+  // Compara IDs e quantidades para detectar mudança real
+  const pecasOriginais = c.pecas || [];
+  const pecasMudaram = pecasSel.length !== pecasOriginais.length ||
+    pecasSel.some((p, i) => {
+      const orig = pecasOriginais[i];
+      return !orig || p.nome !== orig.nome || p.qtd !== orig.qtd;
+    });
+  let valorFinalEdit = pecasMudaram ? valorBruto : (parseFloat(c.valorBruto) || valorBruto);
   dados.valor_bruto = valorFinalEdit;
 
   // Coleta os dados da ficha na edição
