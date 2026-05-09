@@ -1989,21 +1989,8 @@ function round2(v) { return Math.round((parseFloat(v)||0) * 100) / 100; }
 
 function getPrecoPecaCalculado(pecaId) {
   const d = getPrecPeca(pecaId);
-  // Se tem preço fixado, retorna direto sem recalcular
   if (d.precoFixado && d.precoFixado > 0) return d.precoFixado;
-
-  const mins = d.tempo || getTotalProcessosMins() || 60;
-  const sal = getValorHora() * (mins / 60);
-  const cf  = getCustoFixoPorHora() * (mins / 60);
-  const perdaResina = (d.perdaResina ?? 5) / 100;
-  const materiaisComPerda = d.materiais.map(m => {
-    if ((m.nome || '').toLowerCase().includes('resina') && perdaResina > 0) {
-      return { ...m, valor: (parseFloat(m.valor) || 0) * (1 + perdaResina) };
-    }
-    return m;
-  });
-  const r = calcPrec(materiaisComPerda, null, sal, cf);
-  return r.precoCartao > 0 ? r.precoCartao : null;
+  return null;
 }
 
 function _optsLinhaPeca(pecaIdSelecionada) {
