@@ -605,6 +605,7 @@
     <div class="header-logo">Villare <span>Atelier</span></div>
     <div style="display:flex;gap:0.6rem">
       <button class="header-btn" onclick="abrirPrecDoCatalogo()" title="Precificação" style="font-size:1.1rem">🌸</button>
+      <button class="header-btn" onclick="abrirDesidratacao()" title="Desidratação" style="font-size:1.1rem;position:relative">⏱️<span id="badge-desid" style="display:none;position:absolute;top:0;right:0;background:var(--sage);color:white;border-radius:50%;width:14px;height:14px;font-size:0.55rem;align-items:center;justify-content:center;font-family:sans-serif"></span></button>
       <button class="header-btn" onclick="abrirCentroNotif()" id="btn-sininho" style="position:relative">🔔<span id="badge-notif" style="display:none;position:absolute;top:0;right:0;background:var(--bordeaux);color:white;border-radius:50%;width:14px;height:14px;font-size:0.55rem;display:flex;align-items:center;justify-content:center;font-family:sans-serif"></span></button>
     </div>
   </header>
@@ -1299,6 +1300,57 @@
   </div>
 </div>
 
+<!-- DRAWER DESIDRATAÇÃO -->
+<div class="drawer-overlay" id="drawer-desid" onclick="if(event.target===this)closeDrawer('drawer-desid')">
+  <div class="drawer" onclick="event.stopPropagation()">
+    <div class="drawer-handle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem">
+      <div class="drawer-title" style="margin-bottom:0">⏱️ Desidratação</div>
+      <button onclick="abrirNovaDesid()" style="background:var(--brown);border:none;border-radius:6px;color:white;padding:0.45rem 0.9rem;font-size:0.78rem;cursor:pointer;font-family:'Calibri',sans-serif">+ Nova</button>
+    </div>
+    <div id="desid-lista" style="margin-bottom:1.5rem"></div>
+    <button class="btn-secondary" onclick="closeDrawer('drawer-desid')" style="margin-top:0.8rem">Fechar</button>
+  </div>
+</div>
+
+<!-- DRAWER NOVA DESIDRATAÇÃO -->
+<div class="drawer-overlay" id="drawer-nova-desid" onclick="if(event.target===this)closeDrawer('drawer-nova-desid')">
+  <div class="drawer" onclick="event.stopPropagation()">
+    <div class="drawer-handle"></div>
+    <div class="drawer-title">Nova Desidratação</div>
+    <div style="display:flex;flex-direction:column;gap:0.9rem">
+      <div>
+        <div class="field-label">Contrato em produção *</div>
+        <select class="field-input" id="desid-contrato-sel" onchange="preencherDesidDoContrato()" style="width:100%">
+          <option value="">— selecione a noiva —</option>
+        </select>
+      </div>
+      <div id="desid-pecas-wrap" style="display:none">
+        <div class="field-label">Peças</div>
+        <div id="desid-pecas-display" style="font-size:0.85rem;color:var(--muted);background:var(--offwhite);border-radius:6px;padding:0.6rem 0.9rem;border:1px solid rgba(184,134,42,0.15)"></div>
+      </div>
+      <div>
+        <div class="field-label">Tipos de flores</div>
+        <input class="field-input" id="desid-flores" placeholder="Ex: Rosas, eucalipto, gypsophila" style="width:100%">
+      </div>
+      <div>
+        <div class="field-label">Observações</div>
+        <textarea class="field-input" id="desid-obs" rows="2" placeholder="Ex: Cliente quer resina com glitter" style="width:100%;resize:none"></textarea>
+      </div>
+      <div>
+        <div class="field-label">Data de início *</div>
+        <input class="field-input" type="date" id="desid-data" style="width:100%" onchange="atualizarPrevisaoDesid()">
+      </div>
+      <div style="background:rgba(107,143,113,0.1);border:1px solid rgba(107,143,113,0.25);border-radius:8px;padding:0.75rem 1rem">
+        <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:0.25rem">Previsão de conclusão (21 dias)</div>
+        <div id="desid-previsao" style="font-family:'Calibri',serif;font-size:1.15rem;color:var(--sage)">— selecione a data de início</div>
+      </div>
+      <button onclick="salvarDesid()" style="width:100%;background:var(--brown);border:none;border-radius:6px;color:white;padding:0.85rem;font-size:0.85rem;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;font-family:'Calibri',sans-serif">Salvar</button>
+      <button class="btn-secondary" onclick="closeDrawer('drawer-nova-desid')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <!-- DRAWER NOVA NOTIFICAÇÃO MANUAL -->
 <div class="drawer-overlay" id="drawer-notif-manual" onclick="closeDrawer('drawer-notif-manual')">
   <div class="drawer" onclick="event.stopPropagation()">
@@ -1611,6 +1663,7 @@ async function initApp() {
   // Ativa push notifications em background
   if (typeof ativarPushAposLogin === 'function') ativarPushAposLogin();
   carregarBadgeNotif();
+  carregarBadgeDesid();
   // Configura visibilidade inicial do form de novo contrato
   if (typeof onFormaPagChange === 'function') onFormaPagChange('pix');
 }
@@ -5531,6 +5584,158 @@ async function salvarNotifManual() {
     if (badge) { badge.style.display = 'flex'; badge.textContent = parseInt(badge.textContent||'0')+1; }
   } catch(e) { alert('Erro ao salvar: '+e.message); }
 }
+
+// ── DESIDRATAÇÃO ──
+async function abrirDesidratacao() {
+  await renderDesidLista();
+  openDrawer('drawer-desid');
+}
+
+async function abrirNovaDesid() {
+  const sel = document.getElementById('desid-contrato-sel');
+  sel.innerHTML = '<option value="">— selecione a noiva —</option>';
+  try {
+    const lista = await sbFetch('contratos?status=eq.Produção&order=nome.asc&select=id,nome,pecas');
+    (lista || []).forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = c.nome;
+      opt.dataset.pecas = Array.isArray(c.pecas) ? c.pecas.map(p => (p.qtd > 1 ? p.qtd + 'x ' : '') + p.nome).join(', ') : '';
+      sel.appendChild(opt);
+    });
+  } catch(e) {}
+  document.getElementById('desid-flores').value = '';
+  document.getElementById('desid-obs').value = '';
+  document.getElementById('desid-pecas-wrap').style.display = 'none';
+  document.getElementById('desid-pecas-display').textContent = '';
+  const hoje = new Date().toISOString().slice(0,10);
+  document.getElementById('desid-data').value = hoje;
+  atualizarPrevisaoDesid();
+  openDrawer('drawer-nova-desid');
+}
+
+function preencherDesidDoContrato() {
+  const sel = document.getElementById('desid-contrato-sel');
+  const opt = sel.options[sel.selectedIndex];
+  const pecasWrap = document.getElementById('desid-pecas-wrap');
+  const pecasDisplay = document.getElementById('desid-pecas-display');
+  if (!sel.value) { pecasWrap.style.display = 'none'; pecasDisplay.textContent = ''; return; }
+  const pecas = opt.dataset.pecas;
+  if (pecas) { pecasDisplay.textContent = pecas; pecasWrap.style.display = 'block'; }
+  else { pecasWrap.style.display = 'none'; }
+}
+
+function atualizarPrevisaoDesid() {
+  const dataVal = document.getElementById('desid-data').value;
+  const el = document.getElementById('desid-previsao');
+  if (!dataVal) { el.textContent = '— selecione a data de início'; return; }
+  const d = new Date(dataVal + 'T12:00:00');
+  d.setDate(d.getDate() + 21);
+  el.textContent = d.toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
+}
+
+async function salvarDesid() {
+  const sel = document.getElementById('desid-contrato-sel');
+  const contratoId = sel.value;
+  const nomeNoiva = contratoId ? sel.options[sel.selectedIndex].textContent : '';
+  const pecas = document.getElementById('desid-pecas-display').textContent.trim();
+  const flores = document.getElementById('desid-flores').value.trim();
+  const obs = document.getElementById('desid-obs').value.trim();
+  const dataInicio = document.getElementById('desid-data').value;
+  if (!contratoId) { alert('Selecione um contrato.'); return; }
+  if (!dataInicio) { alert('Informe a data de início.'); return; }
+  const d = new Date(dataInicio + 'T12:00:00');
+  d.setDate(d.getDate() + 21);
+  const dataConclusao = d.toISOString().slice(0,10);
+  try {
+    await sbInsert('desidratacao', {
+      contrato_id: parseInt(contratoId),
+      nome_noiva: nomeNoiva,
+      pecas,
+      flores,
+      observacoes: obs,
+      data_inicio: dataInicio,
+      data_conclusao: dataConclusao,
+      concluido: false
+    });
+    closeDrawer('drawer-nova-desid');
+    await renderDesidLista();
+    await atualizarBadgeDesid();
+  } catch(e) { alert('Erro ao salvar: ' + e.message); }
+}
+
+async function concluirDesid(id) {
+  try {
+    await sbFetch('desidratacao?id=eq.'+id, { method:'PATCH', body: JSON.stringify({ concluido: true }) });
+    await renderDesidLista();
+    await atualizarBadgeDesid();
+  } catch(e) { alert('Erro: ' + e.message); }
+}
+
+async function excluirDesid(id) {
+  if (!confirm('Excluir este registro?')) return;
+  try {
+    await sbFetch('desidratacao?id=eq.'+id, { method:'DELETE', headers:{'Prefer':''} });
+    await renderDesidLista();
+    await atualizarBadgeDesid();
+  } catch(e) { alert('Erro: ' + e.message); }
+}
+
+async function renderDesidLista() {
+  const el = document.getElementById('desid-lista');
+  if (!el) return;
+  try {
+    const dados = await sbFetch('desidratacao?order=data_conclusao.asc&select=*');
+    if (!dados || !dados.length) {
+      el.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted-light);font-style:italic;font-size:0.85rem">Nenhum buquê em desidratação</div>';
+      return;
+    }
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    el.innerHTML = dados.map(r => {
+      const dc = new Date(r.data_conclusao + 'T12:00:00');
+      const diff = Math.round((dc - hoje) / 86400000);
+      const concluido = r.concluido;
+      let statusTxt, statusCor;
+      if (concluido) { statusTxt = '✓ Concluído'; statusCor = 'var(--sage)'; }
+      else if (diff < 0) { statusTxt = Math.abs(diff)+'d atrasado'; statusCor = 'var(--bordeaux-soft)'; }
+      else if (diff === 0) { statusTxt = 'Pronto hoje!'; statusCor = 'var(--gold)'; }
+      else { statusTxt = diff+'d restantes'; statusCor = 'var(--brown-mid)'; }
+      const dataFmt = dc.toLocaleDateString('pt-BR', { day:'2-digit', month:'short' });
+      return \`<div style="background:var(--card-bg);border:1px solid rgba(184,134,42,\${concluido?'0.08':'0.18'});border-radius:8px;padding:0.9rem 1rem;margin-bottom:0.7rem;opacity:\${concluido?'0.55':'1'}">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.5rem;margin-bottom:0.5rem">
+          <div>
+            <div style="font-family:'Calibri',serif;font-size:1rem;color:var(--dark)">\${r.nome_noiva}</div>
+            \${r.pecas ? \`<div style="font-size:0.72rem;color:var(--muted);margin-top:0.1rem">\${r.pecas}</div>\` : ''}
+            \${r.flores ? \`<div style="font-size:0.72rem;color:var(--muted)">🌸 \${r.flores}</div>\` : ''}
+            \${r.observacoes ? \`<div style="font-size:0.72rem;color:var(--muted);font-style:italic;margin-top:0.2rem">\${r.observacoes}</div>\` : ''}
+          </div>
+          <button onclick="excluirDesid(\${r.id})" style="background:none;border:none;color:var(--muted-light);font-size:1.1rem;cursor:pointer;padding:0;line-height:1;flex-shrink:0">×</button>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(184,134,42,0.1);padding-top:0.5rem">
+          <div>
+            <div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted)">Pronto em</div>
+            <div style="font-family:'Calibri',serif;font-size:0.95rem;color:\${statusCor}">\${dataFmt} · \${statusTxt}</div>
+          </div>
+          \${!concluido ? \`<button onclick="concluirDesid(\${r.id})" style="background:var(--sage);border:none;border-radius:6px;color:white;padding:0.4rem 0.8rem;font-size:0.72rem;cursor:pointer;font-family:'Calibri',sans-serif">✓ Concluir</button>\` : ''}
+        </div>
+      </div>\`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = \`<div style="color:var(--bordeaux);font-size:0.8rem;padding:1rem">Erro: \${e.message}</div>\`;
+  }
+}
+
+async function atualizarBadgeDesid() {
+  try {
+    const dados = await sbFetch('desidratacao?concluido=eq.false&select=id');
+    const badge = document.getElementById('badge-desid');
+    if (!badge) return;
+    if (dados && dados.length > 0) { badge.textContent = dados.length; badge.style.display = 'flex'; }
+    else { badge.style.display = 'none'; }
+  } catch(e) {}
+}
+
+function carregarBadgeDesid() { atualizarBadgeDesid(); }
 
 // Carrega badge ao iniciar
 async function carregarBadgeNotif() {
